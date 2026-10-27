@@ -33,8 +33,9 @@ fn saudacao() -> View {
 
 #[cfg(target_arch = "wasm32")]
 fn integracao_titan() -> View {
-    use patina::http::{describe_js_error, ApiEnvelope, HttpClient, HttpResponse};
-    use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+    use patina::http::{describe_js_error, ApiEnvelope, HttpClient};
+    use wasm_bindgen::JsValue;
+    use wasm_bindgen_futures::spawn_local;
 
     let status = signal(String::from(
         "API ainda não consultada. Inicie o TITAN e clique no botão.",
@@ -47,22 +48,22 @@ fn integracao_titan() -> View {
         .on(Click, move |_| {
             status_for_click.set("Consultando TITAN…".to_string());
 
-            match client.get_json("/api/v1/hello") {
-                Ok(promise) => {
-                    let status_success = status_for_click.clone();
-                    let status_error = status_for_click.clone();
-
-                    let on_success = Closure::once_into_js(move |value: JsValue| {
+            let client = client.clone();
+            let status_for_request = status_for_click.clone();
+            spawn_local(async move {
+                match client.get_json("/api/v1/hello").await {
+                    Ok(response) => {
                         let decoded = (|| -> Result<String, JsValue> {
-                            let response = HttpResponse::from_js(&value)?;
                             let envelope = ApiEnvelope::from_js(&response.body)?;
                             if envelope.api_version != "v1" {
                                 return Err(JsValue::from_str("versão de API não suportada"));
                             }
-                            let message = ApiEnvelope::string_field(&envelope.data, "message")?;
-                            let environment =
-                                ApiEnvelope::string_field(&envelope.data, "environment")?;
-                            let request_id = response.request_id.as_deref().unwrap_or("não informado");
+
+                            let message = envelope.string_field("message")?;
+                            let environment = envelope.string_field("environment")?;
+                            let request_id =
+                                response.request_id.as_deref().unwrap_or("não informado");
+
                             Ok(format!(
                                 "{message} (ambiente: {environment}; HTTP {}; request ID: {request_id})",
                                 response.status
@@ -70,28 +71,19 @@ fn integracao_titan() -> View {
                         })();
 
                         match decoded {
-                            Ok(message) => status_success.set(message),
-                            Err(error) => status_success.set(format!(
+                            Ok(message) => status_for_request.set(message),
+                            Err(error) => status_for_request.set(format!(
                                 "Resposta fora do contrato esperado: {}",
                                 describe_js_error(&error)
                             )),
                         }
-                    });
-
-                    let on_error = Closure::once_into_js(move |error: JsValue| {
-                        status_error.set(format!(
-                            "Falha ao consultar TITAN: {}",
-                            describe_js_error(&error)
-                        ));
-                    });
-
-                    let _ = promise.then2(on_success.unchecked_ref(), on_error.unchecked_ref());
+                    }
+                    Err(error) => status_for_request.set(format!(
+                        "Falha ao consultar TITAN: {}",
+                        describe_js_error(&error)
+                    )),
                 }
-                Err(error) => status_for_click.set(format!(
-                    "Não foi possível iniciar a requisição: {}",
-                    describe_js_error(&error)
-                )),
-            }
+            });
         })
         .text("Consultar TITAN");
 
