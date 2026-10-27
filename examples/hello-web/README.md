@@ -1,12 +1,14 @@
 # ATLAS — integração de demonstração com TITAN
 
-Este exemplo mostra a UI reativa do ATLAS e, no navegador/WASM, um botão que consulta o endpoint HTTP v1 do TITAN.
+Este exemplo mostra a UI reativa do ATLAS e, no navegador/WASM, botões para consultar o endpoint de sucesso e exercitar o contrato de erro v1 do TITAN.
 
 ## Estado desta demonstração
 
 - O cliente HTTP usa o Fetch API do navegador.
 - O cliente aplica timeout por requisição, rejeita status HTTP fora de 2xx e rejeita respostas que não possam ser interpretadas como JSON.
-- A demonstração valida a versão do envelope e os campos de texto retornados.
+- A demonstração valida a versão do envelope de sucesso e os campos de texto retornados.
+- O botão **Testar erro v1** chama intencionalmente `/api/v1/not-found`; a mensagem apresentada deve incluir `HTTP 404`, `not_found` e o request ID quando disponível.
+- `fixtures/http-v1-error.json` documenta a forma esperada para um erro versionado.
 - A chamada de rede só é incluída na compilação WASM; o conjunto de testes nativos não a executa.
 - A integração real depende do TITAN estar executando e CORS permitir a origem exata da página.
 
@@ -19,7 +21,7 @@ $env:FERROVIA_CORS_ORIGINS = "http://localhost:8000"
 cargo run -p ferrovia-server
 ```
 
-O exemplo de TITAN escuta por padrão em `127.0.0.1:3000`. Acesse primeiro `http://127.0.0.1:3000/api/v1/hello` para inspecionar o JSON diretamente.
+O exemplo de TITAN escuta por padrão em `127.0.0.1:3000`. Acesse primeiro `http://127.0.0.1:3000/api/v1/hello` para inspecionar o JSON diretamente. Para testar o erro, o exemplo do ATLAS chama `/api/v1/not-found`, que deve responder com o envelope de erro v1.
 
 ## Construir e servir ATLAS (WASM)
 
