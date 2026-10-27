@@ -214,7 +214,7 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
 
     // Returning the Response.json() Promise chains body parsing without
     // requiring an async runtime dependency in this framework crate.
-    let on_response = Closure::once_into_js(move |value: JsValue| -> JsValue {
+    let on_response = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |value: JsValue| -> JsValue {
         let response = match value.dyn_into::<Response>() {
             Ok(response) => response,
             Err(_) => {
@@ -244,7 +244,7 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
             Err(error) => return Promise::reject(&error).into(),
         };
 
-        let on_body = Closure::once_into_js(move |body: JsValue| -> JsValue {
+        let on_body = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |body: JsValue| -> JsValue {
             let object = Object::new();
             let status_value = JsValue::from_f64(status as f64);
             let request_id_value = request_id
@@ -263,34 +263,34 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
                 Ok(()) => object.into(),
                 Err(error) => Promise::reject(&error).into(),
             }
-        });
-        let on_body_error = Closure::once_into_js(move |reason: JsValue| -> JsValue {
+        }).into_js_value();
+        let on_body_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
             Promise::reject(&reason).into()
-        });
+        }).into_js_value();
         json_promise
             .then2(on_body.unchecked_ref(), on_body_error.unchecked_ref())
             .into()
-    });
+    }).into_js_value();
 
-    let on_fetch_error = Closure::once_into_js(move |reason: JsValue| -> JsValue {
+    let on_fetch_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
         Promise::reject(&reason).into()
-    });
+    }).into_js_value();
 
     let response_chain =
         fetch_promise.then2(on_response.unchecked_ref(), on_fetch_error.unchecked_ref());
 
     let window_on_success: Window = window.clone();
     let timer_on_success = timeout_slot.clone();
-    let on_success = Closure::once_into_js(move |value: JsValue| -> JsValue {
+    let on_success = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |value: JsValue| -> JsValue {
         let _ = window_on_success.clear_timeout_with_handle(timeout_handle);
         timer_on_success.borrow_mut().take();
         value
-    });
+    }).into_js_value();
 
     let window_on_error = window;
     let timer_on_error = timeout_slot;
     let timed_out_on_error = timed_out;
-    let on_error = Closure::once_into_js(move |reason: JsValue| -> JsValue {
+    let on_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
         let _ = window_on_error.clear_timeout_with_handle(timeout_handle);
         timer_on_error.borrow_mut().take();
 
@@ -302,7 +302,7 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
         } else {
             Promise::reject(&reason).into()
         }
-    });
+    }).into_js_value();
 
     Ok(response_chain.then2(on_success.unchecked_ref(), on_error.unchecked_ref()))
 }
