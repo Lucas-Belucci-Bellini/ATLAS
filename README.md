@@ -1,9 +1,9 @@
-# Patina — framework de frontend em Rust
+# ATLAS  — framework de frontend em Rust
 
 > Versão inicial: `0.1.0` — **esqueleto experimental**, não um framework pronto para produção.
 > Antes chamado de RustFront (nome de trabalho). Ver [ADR-0004](plans/decisions/ADR-0004-nome-patina.md).
 
-Pátina é a camada que se forma na superfície do metal. Rust é o metal; Patina é a superfície — a interface.
+ATLAS é a camada que se forma na superfície do metal. Rust é o metal; Patina é a superfície — a interface.
 
 Patina é um framework para interfaces web escrito em Rust. A primeira etapa mira aplicações SPA executadas no navegador por WebAssembly, com uma pequena árvore de views e um renderer DOM próprio. A intenção é controlar a arquitetura do framework, sem usar Leptos, Dioxus ou Yew como runtime subjacente.
 
@@ -15,7 +15,7 @@ Patina é um framework para interfaces web escrito em Rust. A primeira etapa mir
 - Manter o núcleo independente do navegador sempre que isso for viável.
 - Dar erros úteis, APIs pequenas e documentação em português.
 
-## O que já existe
+## O que já existe 
 
 - Workspace Cargo com `patina-reactive`, `patina-core`, `patina-dom` e a crate de entrada `patina`.
 - Modelo `View` com texto (fixo ou dinâmico), fragmentos e elementos.
