@@ -35,7 +35,7 @@ fn saudacao() -> View {
 
 #[cfg(target_arch = "wasm32")]
 fn integracao_titan() -> View {
-    use patina::http::{describe_js_error, ApiEnvelope, HttpClient};
+    use patina::http::{describe_js_error, ApiEnvelope, HttpClient, HttpResponse};
     use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
     let status = signal(String::from(
@@ -56,14 +56,19 @@ fn integracao_titan() -> View {
 
                     let on_success = Closure::once_into_js(move |value: JsValue| {
                         let decoded = (|| -> Result<String, JsValue> {
-                            let envelope = ApiEnvelope::from_js(&value)?;
+                            let response = HttpResponse::from_js(&value)?;
+                            let envelope = ApiEnvelope::from_js(&response.body)?;
                             if envelope.api_version != "v1" {
                                 return Err(JsValue::from_str("versão de API não suportada"));
                             }
                             let message = ApiEnvelope::string_field(&envelope.data, "message")?;
                             let environment =
                                 ApiEnvelope::string_field(&envelope.data, "environment")?;
-                            Ok(format!("{message} (ambiente: {environment})"))
+                            let request_id = response.request_id.as_deref().unwrap_or("não informado");
+                            Ok(format!(
+                                "{message} (ambiente: {environment}; HTTP {}; request ID: {request_id})",
+                                response.status
+                            ))
                         })();
 
                         match decoded {
