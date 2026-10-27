@@ -42,6 +42,8 @@ fn integracao_titan() -> View {
     ));
     let status_for_click = status.clone();
     let client = HttpClient::new("http://127.0.0.1:3000").with_timeout_ms(5_000);
+    let error_status_for_click = status.clone();
+    let error_client = client.clone();
 
     let button = el("button")
         .class("botao")
@@ -87,6 +89,29 @@ fn integracao_titan() -> View {
         })
         .text("Consultar TITAN");
 
+    // Intentionally call a missing versioned route to demonstrate the v1 error contract.
+    let error_button = el("button")
+        .class("botao")
+        .on(Click, move |_| {
+            error_status_for_click.set("Testando resposta de erro v1…".to_string());
+
+            let client = error_client.clone();
+            let status_for_request = error_status_for_click.clone();
+            spawn_local(async move {
+                match client.get_json("/api/v1/not-found").await {
+                    Ok(response) => status_for_request.set(format!(
+                        "Esperava HTTP 404, mas recebi HTTP {}.",
+                        response.status
+                    )),
+                    Err(error) => status_for_request.set(format!(
+                        "Erro v1 interpretado pelo cliente: {}",
+                        describe_js_error(&error)
+                    )),
+                }
+            });
+        })
+        .text("Testar erro v1");
+
     el("section")
         .class("integracao")
         .child(el("h2").text("Integração com TITAN"))
@@ -94,6 +119,7 @@ fn integracao_titan() -> View {
             "Consulta real à API versionada por HTTP/JSON, com timeout e validação do envelope.",
         ))
         .child(button)
+        .child(error_button)
         .child(el("p").attr("aria-live", "polite").child(status))
         .build()
 }
