@@ -66,11 +66,14 @@ impl HttpClient {
             ));
         }
 
-        let url = format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/'));
+        let url = format!(
+            "{}/{}",
+            base.trim_end_matches('/'),
+            path.trim_start_matches('/')
+        );
         fetch_json_with_timeout(&url, self.timeout_ms)
     }
 }
-
 
 /// Parsed browser response metadata and JSON body.
 #[derive(Debug, Clone)]
@@ -109,7 +112,11 @@ impl HttpResponse {
             return Err(JsValue::from_str("response is missing JSON body"));
         }
 
-        Ok(Self { status, request_id, body })
+        Ok(Self {
+            status,
+            request_id,
+            body,
+        })
     }
 }
 
@@ -170,8 +177,8 @@ pub fn describe_js_error(error: &JsValue) -> String {
 }
 
 fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValue> {
-    let window = web_sys::window()
-        .ok_or_else(|| JsValue::from_str("browser window is not available"))?;
+    let window =
+        web_sys::window().ok_or_else(|| JsValue::from_str("browser window is not available"))?;
     let controller = AbortController::new()?;
     let signal = controller.signal();
 
@@ -246,16 +253,8 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
                 .unwrap_or(JsValue::NULL);
 
             let result = (|| -> Result<(), JsValue> {
-                Reflect::set(
-                    &object,
-                    &JsValue::from_str("status"),
-                    &status_value,
-                )?;
-                Reflect::set(
-                    &object,
-                    &JsValue::from_str("request_id"),
-                    &request_id_value,
-                )?;
+                Reflect::set(&object, &JsValue::from_str("status"), &status_value)?;
+                Reflect::set(&object, &JsValue::from_str("request_id"), &request_id_value)?;
                 Reflect::set(&object, &JsValue::from_str("body"), &body)?;
                 Ok(())
             })();
@@ -277,10 +276,8 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
         Promise::reject(&reason).into()
     });
 
-    let response_chain = fetch_promise.then2(
-        on_response.unchecked_ref(),
-        on_fetch_error.unchecked_ref(),
-    );
+    let response_chain =
+        fetch_promise.then2(on_response.unchecked_ref(), on_fetch_error.unchecked_ref());
 
     let window_on_success: Window = window.clone();
     let timer_on_success = timeout_slot.clone();
@@ -307,8 +304,5 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
         }
     });
 
-    Ok(response_chain.then2(
-        on_success.unchecked_ref(),
-        on_error.unchecked_ref(),
-    ))
+    Ok(response_chain.then2(on_success.unchecked_ref(), on_error.unchecked_ref()))
 }
