@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/patina-reactive",
+    "crates/patina-core",
+    "crates/patina-dom",
+    "crates/patina",
+    "examples/hello-web",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+wasm-bindgen = "0.2.129"
+web-sys = "0.3.106"

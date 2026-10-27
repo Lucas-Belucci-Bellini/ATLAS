@@ -1,0 +1,6 @@
+[package]
+name = "patina-reactive"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Signals, effects e escopos do Patina, sem dependência do navegador."

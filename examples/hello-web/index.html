@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Patina — demonstração</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #121416; color: #ECEAE4; }
+      #app { width: min(680px, calc(100% - 40px)); }
+      .patina-demo { padding: 2rem; border: 1px solid #2A2F33; border-radius: 18px; background: #1B1E21; display: grid; gap: 1.25rem; }
+      h1 { margin: 0; color: #E08A5A; }
+      p { margin: 0; }
+      .botao { justify-self: start; min-height: 44px; padding: 0.6rem 1.2rem; border: 0; border-radius: 10px; background: #E08A5A; color: #121416; font: inherit; font-weight: 600; cursor: pointer; }
+      .campo { display: grid; gap: 0.5rem; }
+      .campo input { min-height: 44px; padding: 0 0.8rem; border: 1px solid #3A3F43; border-radius: 10px; background: #121416; color: inherit; font: inherit; }
+      .campo p { color: #6CC4A8; }
+    </style>
+  </head>
+  <body>
+    <div id="app">Carregando Patina…</div>
+    <script type="module">
+      import init from "./pkg/hello_web.js";
+      init();
+    </script>
+  </body>
+</html>

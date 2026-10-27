@@ -1,0 +1,11 @@
+[package]
+name = "patina-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+patina-reactive = { path = "../patina-reactive" }
