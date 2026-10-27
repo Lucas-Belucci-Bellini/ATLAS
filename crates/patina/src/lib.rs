@@ -3,8 +3,10 @@
 //! This crate reexports the view model and reactive runtime. The browser HTTP
 //! client is available only when compiling for wasm32.
 
-pub use patina_core::{ev, el, Attribute, Component, ElementBuilder, Event, EventType, View};
-pub use patina_reactive::{batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal};
+pub use patina_core::{el, ev, Attribute, Component, ElementBuilder, Event, EventType, View};
+pub use patina_reactive::{
+    batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal,
+};
 
 /// Browser HTTP/JSON client, compiled only for WebAssembly.
 #[cfg(target_arch = "wasm32")]
@@ -12,7 +14,9 @@ pub mod http;
 
 /// Everything commonly needed to build a page: use patina::prelude::*.
 pub mod prelude {
-    pub use patina_core::ev::{Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit};
+    pub use patina_core::ev::{
+        Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
+    };
     pub use patina_core::{el, Component, ElementBuilder, Event, View};
     pub use patina_reactive::{batch, effect, on_cleanup, signal, untrack, Signal};
 }
@@ -32,6 +36,9 @@ pub fn mount(target: &str, view: impl Into<View>) -> Result<(), wasm_bindgen::Js
 
 /// Mounts a view built inside its mount scope and returns a handle for unmount.
 #[cfg(target_arch = "wasm32")]
-pub fn mount_scoped(target: &str, build: impl FnOnce() -> View) -> Result<Mounted, wasm_bindgen::JsValue> {
+pub fn mount_scoped(
+    target: &str,
+    build: impl FnOnce() -> View,
+) -> Result<Mounted, wasm_bindgen::JsValue> {
     patina_dom::mount(target, build)
 }
