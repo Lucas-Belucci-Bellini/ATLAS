@@ -45,7 +45,8 @@ impl HttpClient {
     ///
     /// Returns the status and request ID alongside the parsed JSON body.
     /// Network errors, non-2xx responses, invalid JSON and timeout expiration
-    /// are returned as errors.
+    /// are returned as errors. A recognized family v1 error response adds its
+    /// stable error code and safe message to the returned diagnostic.
     pub async fn get_json(&self, path: &str) -> Result<HttpResponse, JsValue> {
         if self.timeout_ms == 0 {
             return Err(JsValue::from_str("timeout must be greater than zero"));
@@ -130,6 +131,28 @@ impl ApiEnvelope {
     pub fn string_field(&self, field: &str) -> Result<String, JsValue> {
         HttpResponse::string_field(&self.data, field)
     }
+}
+
+/// Returns a diagnostic only when the body matches the family's v1 error shape.
+/// Other server error formats remain intentionally opaque to this client.
+fn versioned_api_error_message(value: &JsValue) -> Option<String> {
+    let meta = Reflect::get(value, &JsValue::from_str("meta")).ok()?;
+    let version = Reflect::get(&meta, &JsValue::from_str("api_version"))
+        .ok()?
+        .as_string()?;
+    if version != "v1" {
+        return None;
+    }
+
+    let error = Reflect::get(value, &JsValue::from_str("error")).ok()?;
+    let code = Reflect::get(&error, &JsValue::from_str("code"))
+        .ok()?
+        .as_string()?;
+    let message = Reflect::get(&error, &JsValue::from_str("message"))
+        .ok()?
+        .as_string()?;
+
+    Some(format!("{code}: {message}"))
 }
 
 /// Converts common browser/network rejection values into displayable text.
@@ -221,11 +244,31 @@ async fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<HttpRespo
     let status = response.status();
     let request_id = response.headers().get("x-request-id")?;
     if !response.ok() {
-        let message = match request_id {
-            Some(request_id) => format!("HTTP {status}; request ID: {request_id}"),
-            None => format!("HTTP {status}"),
+        let error_value = match response.json() {
+            Ok(promise) => match JsFuture::from(promise).await {
+                Ok(value) => Some(value),
+                Err(error) if timed_out.get() => {
+                    return Err(timeout_error_if_needed(&timed_out, timeout_ms, error))
+                }
+                Err(_) => None,
+            },
+            Err(error) if timed_out.get() => {
+                return Err(timeout_error_if_needed(&timed_out, timeout_ms, error))
+            }
+            Err(_) => None,
         };
-        return Err(JsValue::from_str(&message));
+
+        let mut parts = vec![format!("HTTP {status}")];
+        if let Some(detail) = error_value
+            .as_ref()
+            .and_then(versioned_api_error_message)
+        {
+            parts.push(detail);
+        }
+        if let Some(request_id) = request_id {
+            parts.push(format!("request ID: {request_id}"));
+        }
+        return Err(JsValue::from_str(&parts.join("; ")));
     }
 
     let body = JsFuture::from(response.json()?)
