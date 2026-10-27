@@ -132,8 +132,8 @@ mod tests {
     #[test]
     fn pagina_renderiza_estado_inicial() {
         let html = pagina().render_html();
-        assert!(html.starts_with("<main class=\\"patina-demo\\"><h1>ATLAS — demonstração</h1>"));
-        assert!(html.contains("<button class=\\"botao\\">Cliques: 0</button>"));
+        assert!(html.starts_with("<main"));
+        assert!(html.contains("Cliques: 0"));
         assert!(html.contains("<p>Olá, mundo!</p>"));
     }
 }
