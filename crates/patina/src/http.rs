@@ -1,16 +1,15 @@
 //! Browser HTTP/JSON client for ATLAS (WASM).
 //!
-//! The client uses the browser Fetch API and returns a JavaScript Promise so
-//! it can run without a runtime dependency on a particular async executor.
-//! Network failures, non-success status codes, invalid JSON and timeouts reject
-//! the Promise. JSON values are returned as JsValue because this crate
-//! intentionally does not impose a serialization framework.
+//! Uses the browser Fetch API with a cancellable request timeout. The client
+//! returns parsed JSON as JsValue and deliberately does not impose a
+//! serialization framework.
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-use js_sys::{Object, Promise, Reflect};
+use js_sys::Reflect;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{AbortController, Request, RequestInit, Response, Window};
 
 /// Client for a same-origin or cross-origin HTTP API.
@@ -44,10 +43,10 @@ impl HttpClient {
 
     /// Performs a GET request and parses a successful response as JSON.
     ///
-    /// The returned Promise resolves to an HttpResponse containing the parsed
-    /// JSON body, status and x-request-id when present. The Promise is rejected
-    /// for network errors, non-2xx HTTP responses, invalid JSON, or timeouts.
-    pub fn get_json(&self, path: &str) -> Result<Promise, JsValue> {
+    /// Returns the status and request ID alongside the parsed JSON body.
+    /// Network errors, non-2xx responses, invalid JSON and timeout expiration
+    /// are returned as errors.
+    pub async fn get_json(&self, path: &str) -> Result<HttpResponse, JsValue> {
         if self.timeout_ms == 0 {
             return Err(JsValue::from_str("timeout must be greater than zero"));
         }
@@ -71,7 +70,8 @@ impl HttpClient {
             base.trim_end_matches('/'),
             path.trim_start_matches('/')
         );
-        fetch_json_with_timeout(&url, self.timeout_ms)
+
+        fetch_json_with_timeout(&url, self.timeout_ms).await
     }
 }
 
@@ -87,42 +87,16 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
-    /// Decodes the object produced by HttpClient.
-    pub fn from_js(value: &JsValue) -> Result<Self, JsValue> {
-        let status_value = Reflect::get(value, &JsValue::from_str("status"))?;
-        let status = status_value
-            .as_f64()
-            .filter(|status| status.fract() == 0.0 && (200.0..=599.0).contains(status))
-            .ok_or_else(|| JsValue::from_str("response status must be a valid HTTP status"))?
-            as u16;
-
-        let request_id_value = Reflect::get(value, &JsValue::from_str("request_id"))?;
-        let request_id = if request_id_value.is_null() || request_id_value.is_undefined() {
-            None
-        } else {
-            Some(
-                request_id_value
-                    .as_string()
-                    .ok_or_else(|| JsValue::from_str("response request_id must be a string"))?,
-            )
-        };
-
-        let body = Reflect::get(value, &JsValue::from_str("body"))?;
-        if body.is_null() || body.is_undefined() {
-            return Err(JsValue::from_str("response is missing JSON body"));
-        }
-
-        Ok(Self {
-            status,
-            request_id,
-            body,
-        })
+    /// Reads a required string field from a route-specific JSON object.
+    pub fn string_field(value: &JsValue, field: &str) -> Result<String, JsValue> {
+        let field_value = Reflect::get(value, &JsValue::from_str(field))?;
+        field_value
+            .as_string()
+            .ok_or_else(|| JsValue::from_str(&format!("field '{field}' must be a string")))
     }
 }
 
 /// Parsed top-level fields of the shared successful HTTP/JSON envelope.
-///
-/// data remains a JsValue; callers decode route-specific fields explicitly.
 #[derive(Debug, Clone)]
 pub struct ApiEnvelope {
     /// Route-specific JSON payload.
@@ -132,7 +106,7 @@ pub struct ApiEnvelope {
 }
 
 impl ApiEnvelope {
-    /// Parses the { "data": ..., "meta": { "api_version": "..." } } envelope.
+    /// Parses the data/meta envelope used by the family HTTP/JSON contract.
     pub fn from_js(value: &JsValue) -> Result<Self, JsValue> {
         let data = Reflect::get(value, &JsValue::from_str("data"))?;
         if data.is_null() || data.is_undefined() {
@@ -152,12 +126,9 @@ impl ApiEnvelope {
         Ok(Self { data, api_version })
     }
 
-    /// Reads a required string field from a route-specific JSON object.
-    pub fn string_field(value: &JsValue, field: &str) -> Result<String, JsValue> {
-        let field_value = Reflect::get(value, &JsValue::from_str(field))?;
-        field_value
-            .as_string()
-            .ok_or_else(|| JsValue::from_str(&format!("field {field} must be a string")))
+    /// Reads a required string field from the envelope's data object.
+    pub fn string_field(&self, field: &str) -> Result<String, JsValue> {
+        HttpResponse::string_field(&self.data, field)
     }
 }
 
@@ -176,7 +147,35 @@ pub fn describe_js_error(error: &JsValue) -> String {
     format!("{error:?}")
 }
 
-fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValue> {
+struct TimeoutGuard {
+    window: Window,
+    handle: i32,
+    callback: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+}
+
+impl Drop for TimeoutGuard {
+    fn drop(&mut self) {
+        let _ = self.window.clear_timeout_with_handle(self.handle);
+        let _ = self.callback.borrow_mut().take();
+    }
+}
+
+fn timeout_error_if_needed(
+    timed_out: &Cell<bool>,
+    timeout_ms: u32,
+    original_error: JsValue,
+) -> JsValue {
+    if timed_out.get() {
+        JsValue::from_str(&format!("request timed out after {timeout_ms} ms"))
+    } else {
+        original_error
+    }
+}
+
+async fn fetch_json_with_timeout(
+    url: &str,
+    timeout_ms: u32,
+) -> Result<HttpResponse, JsValue> {
     let window =
         web_sys::window().ok_or_else(|| JsValue::from_str("browser window is not available"))?;
     let controller = AbortController::new()?;
@@ -189,20 +188,17 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
     let request = Request::new_with_str_and_init(url, &options)?;
     request.headers().set("Accept", "application/json")?;
 
-    let fetch_promise = window.fetch_with_request(&request);
     let timed_out = Rc::new(Cell::new(false));
     let timed_out_for_timer = timed_out.clone();
     let controller_for_timer = controller.clone();
-
-    let timeout_closure = Closure::<dyn FnMut()>::new(move || {
+    let timeout_callback = Closure::<dyn FnMut()>::new(move || {
         timed_out_for_timer.set(true);
         let _ = controller_for_timer.abort();
     });
-    let timeout_slot: Rc<RefCell<Option<Closure<dyn FnMut()>>>> =
-        Rc::new(RefCell::new(Some(timeout_closure)));
+    let timeout_callback = Rc::new(RefCell::new(Some(timeout_callback)));
 
     let timeout_handle = {
-        let borrowed = timeout_slot.borrow();
+        let borrowed = timeout_callback.borrow();
         let callback = borrowed
             .as_ref()
             .ok_or_else(|| JsValue::from_str("request timeout callback is unavailable"))?;
@@ -212,97 +208,36 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
         )?
     };
 
-    // Returning the Response.json() Promise chains body parsing without
-    // requiring an async runtime dependency in this framework crate.
-    let on_response = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |value: JsValue| -> JsValue {
-        let response = match value.dyn_into::<Response>() {
-            Ok(response) => response,
-            Err(_) => {
-                return Promise::reject(&JsValue::from_str(
-                    "fetch returned an invalid response object",
-                ))
-                .into();
-            }
+    let _timeout_guard = TimeoutGuard {
+        window: window.clone(),
+        handle: timeout_handle,
+        callback: timeout_callback,
+    };
+
+    let response_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .map_err(|error| timeout_error_if_needed(&timed_out, timeout_ms, error))?;
+    let response = response_value
+        .dyn_into::<Response>()
+        .map_err(|_| JsValue::from_str("fetch returned an invalid response object"))?;
+
+    let status = response.status();
+    let request_id = response.headers().get("x-request-id")?;
+    if !response.ok() {
+        let message = match request_id {
+            Some(request_id) => format!("HTTP {status}; request ID: {request_id}"),
+            None => format!("HTTP {status}"),
         };
+        return Err(JsValue::from_str(&message));
+    }
 
-        let status = response.status();
-        let request_id = match response.headers().get("x-request-id") {
-            Ok(request_id) => request_id,
-            Err(error) => return Promise::reject(&error).into(),
-        };
+    let body = JsFuture::from(response.json()?)
+        .await
+        .map_err(|error| timeout_error_if_needed(&timed_out, timeout_ms, error))?;
 
-        if !response.ok() {
-            let message = match request_id {
-                Some(request_id) => format!("HTTP {status}; request ID: {request_id}"),
-                None => format!("HTTP {status}"),
-            };
-            return Promise::reject(&JsValue::from_str(&message)).into();
-        }
-
-        let json_promise = match response.json() {
-            Ok(json_promise) => json_promise,
-            Err(error) => return Promise::reject(&error).into(),
-        };
-
-        let on_body = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |body: JsValue| -> JsValue {
-            let object = Object::new();
-            let status_value = JsValue::from_f64(status as f64);
-            let request_id_value = request_id
-                .as_ref()
-                .map(|id| JsValue::from_str(id))
-                .unwrap_or(JsValue::NULL);
-
-            let result = (|| -> Result<(), JsValue> {
-                Reflect::set(&object, &JsValue::from_str("status"), &status_value)?;
-                Reflect::set(&object, &JsValue::from_str("request_id"), &request_id_value)?;
-                Reflect::set(&object, &JsValue::from_str("body"), &body)?;
-                Ok(())
-            })();
-
-            match result {
-                Ok(()) => object.into(),
-                Err(error) => Promise::reject(&error).into(),
-            }
-        }).into_js_value();
-        let on_body_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
-            Promise::reject(&reason).into()
-        }).into_js_value();
-        json_promise
-            .then2(on_body.unchecked_ref(), on_body_error.unchecked_ref())
-            .into()
-    }).into_js_value();
-
-    let on_fetch_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
-        Promise::reject(&reason).into()
-    }).into_js_value();
-
-    let response_chain =
-        fetch_promise.then2(on_response.unchecked_ref(), on_fetch_error.unchecked_ref());
-
-    let window_on_success: Window = window.clone();
-    let timer_on_success = timeout_slot.clone();
-    let on_success = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |value: JsValue| -> JsValue {
-        let _ = window_on_success.clear_timeout_with_handle(timeout_handle);
-        timer_on_success.borrow_mut().take();
-        value
-    }).into_js_value();
-
-    let window_on_error = window;
-    let timer_on_error = timeout_slot;
-    let timed_out_on_error = timed_out;
-    let on_error = Closure::<dyn FnMut(JsValue) -> JsValue>::once(move |reason: JsValue| -> JsValue {
-        let _ = window_on_error.clear_timeout_with_handle(timeout_handle);
-        timer_on_error.borrow_mut().take();
-
-        if timed_out_on_error.get() {
-            Promise::reject(&JsValue::from_str(&format!(
-                "request timed out after {timeout_ms} ms"
-            )))
-            .into()
-        } else {
-            Promise::reject(&reason).into()
-        }
-    }).into_js_value();
-
-    Ok(response_chain.then2(on_success.unchecked_ref(), on_error.unchecked_ref()))
+    Ok(HttpResponse {
+        status,
+        request_id,
+        body,
+    })
 }
