@@ -39,6 +39,19 @@ Abra `http://localhost:8000` e clique em **Consultar TITAN**.
 
 Importante: a origem precisa corresponder exatamente à configuração CORS do TITAN. Se servir em outro host/porta, ajuste `FERROVIA_CORS_ORIGINS` para essa origem e reinicie o servidor.
 
+
+## Verificar o contrato HTTP sem navegador (PowerShell)
+
+Com o TITAN em execução em outro terminal, na raiz do clone do ATLAS execute:
+
+```powershell
+.\examples\hello-web\scripts\contract-smoke-test.ps1 -BaseUrl "http://127.0.0.1:3000"
+```
+
+O script verifica o HTTP 200 e o envelope de sucesso de `/api/v1/hello`, depois verifica o HTTP 404, o envelope de erro v1 e o cabeçalho `x-request-id` de `/api/v1/not-found`. Ele usa o cliente HTTP do .NET e não exige instalar módulos PowerShell adicionais.
+
+Este é um teste de integração contra um servidor em execução; ele não substitui o teste de interação no navegador/WASM e não testa CORS, pois a chamada é feita diretamente pelo script.
+
 ## Limitações deliberadas
 
 - Não envia cookies nem credenciais automaticamente.
