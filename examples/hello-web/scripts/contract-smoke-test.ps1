@@ -15,6 +15,8 @@ if ($baseUri.Scheme -ne "http" -and $baseUri.Scheme -ne "https") {
     throw "BaseUrl deve usar HTTP ou HTTPS."
 }
 
+Add-Type -AssemblyName System.Net.Http
+
 $base = $BaseUrl.TrimEnd("/")
 $client = [System.Net.Http.HttpClient]::new()
 $client.Timeout = [TimeSpan]::FromSeconds(10)
