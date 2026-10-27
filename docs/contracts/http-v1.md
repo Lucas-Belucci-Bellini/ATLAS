@@ -71,7 +71,7 @@ ATLAS must not depend on TITAN internals or import backend Rust types as a wire 
 ## Implementation status
 
 - TITAN `GET /api/v1/hello`: reference success endpoint.
-- TITAN route-level 404/405 under `/api/v1`: intended to use the versioned error envelope; outer middleware errors may still be legacy-shaped.
+- TITAN route-level 404/405 and request timeouts under `/api/v1`: intended to use the versioned error envelope; unversioned routes retain legacy error shapes.
 - ATLAS `HttpClient`, `HttpResponse` and `ApiEnvelope`: implemented in this branch; error diagnostics recognize the v1 error envelope.
 - Browser/WASM build and browser-level integration test: pending verification for the current changes.
 - Cross-repository generated types and automated browser conformance tests: not implemented.
