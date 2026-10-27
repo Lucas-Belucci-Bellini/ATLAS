@@ -7,7 +7,9 @@ use patina_reactive::{create_root, effect, on_cleanup, untrack, with_owner, Owne
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{Document, Element, EventTarget, HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement, Node};
+use web_sys::{
+    Document, Element, EventTarget, HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement, Node,
+};
 
 /// Uma árvore montada. `unmount` remove os nós, os listeners e os effects.
 /// Soltar o `Mounted` sem chamar `unmount` mantém a interface viva.
@@ -41,9 +43,9 @@ fn try_mount(target: &str, build: impl FnOnce() -> View) -> Result<Mounted, JsVa
     let document = window
         .document()
         .ok_or_else(|| JsValue::from_str("document indisponível"))?;
-    let element = document
-        .query_selector(target)?
-        .ok_or_else(|| JsValue::from_str(&format!("nenhum elemento casa com o seletor `{target}`")))?;
+    let element = document.query_selector(target)?.ok_or_else(|| {
+        JsValue::from_str(&format!("nenhum elemento casa com o seletor `{target}`"))
+    })?;
 
     let (rendered, root) = create_root(|| render_node(&document, &build()));
     match rendered {
@@ -84,12 +86,19 @@ fn render_node(document: &Document, view: &View) -> Result<Node, JsValue> {
             }
             Ok(fragment.unchecked_into::<Node>())
         }
-        View::Element { tag, attributes, listeners, children } => {
+        View::Element {
+            tag,
+            attributes,
+            listeners,
+            children,
+        } => {
             let element = document.create_element(tag)?;
             for attribute in attributes {
                 match &attribute.value {
                     AttrValue::Static(value) => element.set_attribute(&attribute.name, value)?,
-                    AttrValue::Dynamic(text) => bind_attribute(&element, &attribute.name, text.clone()),
+                    AttrValue::Dynamic(text) => {
+                        bind_attribute(&element, &attribute.name, text.clone())
+                    }
                 }
             }
             for listener in listeners {
@@ -166,7 +175,10 @@ fn field_value(target: EventTarget) -> Option<String> {
         Ok(area) => return Some(area.value()),
         Err(target) => target,
     };
-    target.dyn_into::<HtmlSelectElement>().ok().map(|select| select.value())
+    target
+        .dyn_into::<HtmlSelectElement>()
+        .ok()
+        .map(|select| select.value())
 }
 
 // ---------------------------------------------------------------------------
@@ -217,8 +229,14 @@ impl Range {
 
 /// Renderiza `view` num escopo filho de `owner`, sem inscrever o effect atual,
 /// e insere o resultado antes de `before`. Devolve o trecho criado e o escopo.
-fn render_range(document: &Document, owner: Option<Owner>, view: impl FnOnce() -> View, before: &Node) -> Result<(Range, Root), JsValue> {
-    let (rendered, root) = untrack(|| with_owner(owner, || create_root(|| render_node(document, &view()))));
+fn render_range(
+    document: &Document,
+    owner: Option<Owner>,
+    view: impl FnOnce() -> View,
+    before: &Node,
+) -> Result<(Range, Root), JsValue> {
+    let (rendered, root) =
+        untrack(|| with_owner(owner, || create_root(|| render_node(document, &view()))));
     let node = match rendered {
         Ok(node) => node,
         Err(error) => {
@@ -233,9 +251,15 @@ fn render_range(document: &Document, owner: Option<Owner>, view: impl FnOnce() -
         node.append_child(&document.create_comment(""))?;
     }
     let range = if node.node_type() == Node::DOCUMENT_FRAGMENT_NODE {
-        Range { first: node.first_child().unwrap_throw(), last: node.last_child().unwrap_throw() }
+        Range {
+            first: node.first_child().unwrap_throw(),
+            last: node.last_child().unwrap_throw(),
+        }
     } else {
-        Range { first: node.clone(), last: node.clone() }
+        Range {
+            first: node.clone(),
+            last: node.clone(),
+        }
     };
 
     let parent = before
@@ -249,7 +273,9 @@ fn render_range(document: &Document, owner: Option<Owner>, view: impl FnOnce() -
 fn markers(document: &Document, name: &str) -> Result<(Node, Node), JsValue> {
     let fragment = document.create_document_fragment();
     fragment.append_child(&document.create_comment(name))?;
-    let end: Node = document.create_comment(&format!("/{name}")).unchecked_into();
+    let end: Node = document
+        .create_comment(&format!("/{name}"))
+        .unchecked_into();
     fragment.append_child(&end)?;
     Ok((fragment.unchecked_into(), end))
 }
@@ -274,7 +300,9 @@ fn render_show(document: &Document, show: &Show) -> Result<Node, JsValue> {
             range.remove();
         }
         let show = show.clone();
-        let Some(branch) = untrack(|| show.branch(condition)) else { return };
+        let Some(branch) = untrack(|| show.branch(condition)) else {
+            return;
+        };
         match render_range(&document, owner, move || branch, &end) {
             Ok(rendered) => current = Some(rendered),
             Err(error) => web_sys::console::error_1(&error),
@@ -317,14 +345,20 @@ fn reconcile(
     rows: &RefCell<Vec<Row>>,
     items: Vec<patina_core::ListItem>,
 ) -> Result<(), JsValue> {
-    let mut old: HashMap<Key, Row> = rows.borrow_mut().drain(..).map(|row| (row.key.clone(), row)).collect();
+    let mut old: HashMap<Key, Row> = rows
+        .borrow_mut()
+        .drain(..)
+        .map(|row| (row.key.clone(), row))
+        .collect();
     let mut seen = HashSet::new();
     let mut next = Vec::with_capacity(items.len());
     let mut fresh = Vec::new();
 
     for item in items {
         if !seen.insert(item.key.clone()) {
-            web_sys::console::warn_1(&JsValue::from_str("patina: chave repetida em each(); item ignorado"));
+            web_sys::console::warn_1(&JsValue::from_str(
+                "patina: chave repetida em each(); item ignorado",
+            ));
             continue;
         }
         match old.remove(&item.key) {
@@ -374,10 +408,14 @@ fn first_region_node(rows: &[Row], end: &Node) -> Node {
     let row_nodes: HashSet<u32> = HashSet::new();
     let _ = row_nodes;
     while let Some(previous) = node.previous_sibling() {
-        if previous.node_type() == Node::COMMENT_NODE && previous.text_content().as_deref() == Some("each") {
+        if previous.node_type() == Node::COMMENT_NODE
+            && previous.text_content().as_deref() == Some("each")
+        {
             return previous.next_sibling().unwrap_or_else(|| end.clone());
         }
         node = previous;
     }
-    rows.first().map(|row| row.range.first.clone()).unwrap_or_else(|| end.clone())
+    rows.first()
+        .map(|row| row.range.first.clone())
+        .unwrap_or_else(|| end.clone())
 }
