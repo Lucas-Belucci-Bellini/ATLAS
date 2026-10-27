@@ -9,7 +9,7 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-use js_sys::{Promise, Reflect};
+use js_sys::{Object, Promise, Reflect};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::{AbortController, Request, RequestInit, Response, Window};
 
@@ -44,9 +44,9 @@ impl HttpClient {
 
     /// Performs a GET request and parses a successful response as JSON.
     ///
-    /// The returned Promise resolves to the parsed JSON JsValue. The Promise
-    /// is rejected for network errors, non-2xx HTTP responses, invalid JSON,
-    /// or when the timeout expires.
+    /// The returned Promise resolves to an HttpResponse containing the parsed
+    /// JSON body, status and x-request-id when present. The Promise is rejected
+    /// for network errors, non-2xx HTTP responses, invalid JSON, or timeouts.
     pub fn get_json(&self, path: &str) -> Result<Promise, JsValue> {
         if self.timeout_ms == 0 {
             return Err(JsValue::from_str("timeout must be greater than zero"));
@@ -68,6 +68,48 @@ impl HttpClient {
 
         let url = format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/'));
         fetch_json_with_timeout(&url, self.timeout_ms)
+    }
+}
+
+
+/// Parsed browser response metadata and JSON body.
+#[derive(Debug, Clone)]
+pub struct HttpResponse {
+    /// HTTP status code for the successful response.
+    pub status: u16,
+    /// Request ID returned by the server, when available.
+    pub request_id: Option<String>,
+    /// Parsed JSON body.
+    pub body: JsValue,
+}
+
+impl HttpResponse {
+    /// Decodes the object produced by HttpClient.
+    pub fn from_js(value: &JsValue) -> Result<Self, JsValue> {
+        let status_value = Reflect::get(value, &JsValue::from_str("status"))?;
+        let status = status_value
+            .as_f64()
+            .filter(|status| status.fract() == 0.0 && (200.0..=599.0).contains(status))
+            .ok_or_else(|| JsValue::from_str("response status must be a valid HTTP status"))?
+            as u16;
+
+        let request_id_value = Reflect::get(value, &JsValue::from_str("request_id"))?;
+        let request_id = if request_id_value.is_null() || request_id_value.is_undefined() {
+            None
+        } else {
+            Some(
+                request_id_value
+                    .as_string()
+                    .ok_or_else(|| JsValue::from_str("response request_id must be a string"))?,
+            )
+        };
+
+        let body = Reflect::get(value, &JsValue::from_str("body"))?;
+        if body.is_null() || body.is_undefined() {
+            return Err(JsValue::from_str("response is missing JSON body"));
+        }
+
+        Ok(Self { status, request_id, body })
     }
 }
 
@@ -176,18 +218,59 @@ fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<Promise, JsValu
             }
         };
 
+        let status = response.status();
+        let request_id = match response.headers().get("x-request-id") {
+            Ok(request_id) => request_id,
+            Err(error) => return Promise::reject(&error).into(),
+        };
+
         if !response.ok() {
-            return Promise::reject(&JsValue::from_str(&format!(
-                "HTTP {}",
-                response.status()
-            )))
-            .into();
+            let message = match request_id {
+                Some(request_id) => format!("HTTP {status}; request ID: {request_id}"),
+                None => format!("HTTP {status}"),
+            };
+            return Promise::reject(&JsValue::from_str(&message)).into();
         }
 
-        match response.json() {
-            Ok(json_promise) => json_promise.into(),
-            Err(error) => Promise::reject(&error).into(),
-        }
+        let json_promise = match response.json() {
+            Ok(json_promise) => json_promise,
+            Err(error) => return Promise::reject(&error).into(),
+        };
+
+        let on_body = Closure::once_into_js(move |body: JsValue| -> JsValue {
+            let object = Object::new();
+            let status_value = JsValue::from_f64(status as f64);
+            let request_id_value = request_id
+                .as_ref()
+                .map(|id| JsValue::from_str(id))
+                .unwrap_or(JsValue::NULL);
+
+            let result = (|| -> Result<(), JsValue> {
+                Reflect::set(
+                    &object,
+                    &JsValue::from_str("status"),
+                    &status_value,
+                )?;
+                Reflect::set(
+                    &object,
+                    &JsValue::from_str("request_id"),
+                    &request_id_value,
+                )?;
+                Reflect::set(&object, &JsValue::from_str("body"), &body)?;
+                Ok(())
+            })();
+
+            match result {
+                Ok(()) => object.into(),
+                Err(error) => Promise::reject(&error).into(),
+            }
+        });
+        let on_body_error = Closure::once_into_js(move |reason: JsValue| -> JsValue {
+            Promise::reject(&reason).into()
+        });
+        json_promise
+            .then2(on_body.unchecked_ref(), on_body_error.unchecked_ref())
+            .into()
     });
 
     let on_fetch_error = Closure::once_into_js(move |reason: JsValue| -> JsValue {
