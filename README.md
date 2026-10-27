@@ -24,6 +24,7 @@ Patina é um framework para interfaces web escrito em Rust. A primeira etapa mir
 - Eventos (`Click`, `Input`, `Submit`…) removidos automaticamente no `unmount`.
 - Atualização localizada: quando um signal muda, só o nó de texto ou atributo afetado é tocado.
 - Exemplo `examples/hello-web` com contador e campo de texto.
+- Cliente HTTP/JSON exclusivo para WASM, com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
 - Testes nativos para o modelo de views e a reatividade, incluindo ausência de vazamentos.
 
 ## O que ainda não existe
