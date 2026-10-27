@@ -107,14 +107,15 @@ fn integracao_titan() -> View {
 }
 
 pub fn pagina() -> View {
-    let page = el("main")
-        .class("patina-demo")
-        .child(el("h1").text("ATLAS — demonstração"))
-        .child(el("p").text(
-            "Interface reativa em Rust, preparada para consumir contratos HTTP versionados.",
-        ))
-        .child(contador())
-        .child(saudacao());
+    let page =
+        el("main")
+            .class("patina-demo")
+            .child(el("h1").text("ATLAS — demonstração"))
+            .child(el("p").text(
+                "Interface reativa em Rust, preparada para consumir contratos HTTP versionados.",
+            ))
+            .child(contador())
+            .child(saudacao());
 
     #[cfg(target_arch = "wasm32")]
     let page = page.child(integracao_titan());
