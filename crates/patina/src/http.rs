@@ -172,10 +172,7 @@ fn timeout_error_if_needed(
     }
 }
 
-async fn fetch_json_with_timeout(
-    url: &str,
-    timeout_ms: u32,
-) -> Result<HttpResponse, JsValue> {
+async fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<HttpResponse, JsValue> {
     let window =
         web_sys::window().ok_or_else(|| JsValue::from_str("browser window is not available"))?;
     let controller = AbortController::new()?;
