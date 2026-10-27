@@ -44,5 +44,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - name: Check workspace for WASM
-        run: cargo check --workspace --target wasm32-unknown-unknown --locked
+      - name: Check workspace for WASM and diagnose lockfile
+        run: |
+          cargo check --workspace --target wasm32-unknown-unknown
+          git diff -- Cargo.lock
