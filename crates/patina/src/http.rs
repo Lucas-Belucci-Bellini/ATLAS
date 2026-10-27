@@ -259,10 +259,7 @@ async fn fetch_json_with_timeout(url: &str, timeout_ms: u32) -> Result<HttpRespo
         };
 
         let mut parts = vec![format!("HTTP {status}")];
-        if let Some(detail) = error_value
-            .as_ref()
-            .and_then(versioned_api_error_message)
-        {
+        if let Some(detail) = error_value.as_ref().and_then(versioned_api_error_message) {
             parts.push(detail);
         }
         if let Some(request_id) = request_id {
