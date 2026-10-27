@@ -18,16 +18,14 @@ fn saudacao() -> View {
 
     el("div")
         .class("campo")
-        .child(
-            el("label")
-                .attr("for", "nome")
-                .text("Seu nome"),
-        )
+        .child(el("label").attr("for", "nome").text("Seu nome"))
         .child(
             el("input")
                 .attr("id", "nome")
                 .attr("value", "mundo")
-                .on(Input, move |ev| nome.set(ev.value().unwrap_or_default().to_string())),
+                .on(Input, move |ev| {
+                    nome.set(ev.value().unwrap_or_default().to_string())
+                }),
         )
         .child(el("p").text_with(move || format!("Olá, {}!", nome.get())))
         .build()
