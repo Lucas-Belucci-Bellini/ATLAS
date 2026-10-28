@@ -7,17 +7,17 @@ pub use patina_reactive::{
     batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal,
 };
 
-/// Official Atlas names for core view and rendering types.
-pub use patina_core::{
-    AttrValue as AtlasAttrValue, DynText as AtlasDynText, Key as AtlasKey, List as AtlasList,
-    ListItem as AtlasListItem, Listener as AtlasListener, Show as AtlasShow,
-};
 /// Official Atlas name for an HTML attribute descriptor.
 pub use patina_core::Attribute as AtlasAttribute;
 /// Official Atlas name for DOM event values.
 pub use patina_core::Event as AtlasEvent;
 /// Official Atlas name for DOM event kinds.
 pub use patina_core::EventType as AtlasEventType;
+/// Official Atlas names for core view and rendering types.
+pub use patina_core::{
+    AttrValue as AtlasAttrValue, DynText as AtlasDynText, Key as AtlasKey, List as AtlasList,
+    ListItem as AtlasListItem, Listener as AtlasListener, Show as AtlasShow,
+};
 /// Official Atlas name for a reactive ownership root.
 pub use patina_reactive::Root as AtlasRoot;
 /// Official Atlas name for a reactive ownership owner.
@@ -60,9 +60,8 @@ pub mod prelude {
         AtlasAttrValue, AtlasAttribute, AtlasComponent, AtlasDynText, AtlasEffect,
         AtlasElementBuilder, AtlasEvent, AtlasEventType, AtlasKey, AtlasList, AtlasListItem,
         AtlasListener, AtlasOwner, AtlasRoot, AtlasShow, AtlasSignal, AtlasView, PatinaAttribute,
-        PatinaComponent,
-        PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType, PatinaRoot, PatinaSignal,
-        PatinaView,
+        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
+        PatinaRoot, PatinaSignal, PatinaView,
     };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
