@@ -7,6 +7,15 @@ pub use patina_reactive::{
     batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal,
 };
 
+/// Official Atlas name for an HTML attribute descriptor.
+pub use patina_core::Attribute as AtlasAttribute;
+/// Official Atlas name for DOM event values.
+pub use patina_core::Event as AtlasEvent;
+/// Official Atlas name for DOM event kinds.
+pub use patina_core::EventType as AtlasEventType;
+/// Official Atlas name for a reactive ownership root.
+pub use patina_reactive::Root as AtlasRoot;
+
 /// Official Atlas name for View.
 pub type AtlasView = View;
 /// Official Atlas name for Component.
@@ -20,10 +29,14 @@ pub type AtlasEffect = Effect;
 
 /// Compatibility aliases for the previous public branding.
 pub type PatinaView = AtlasView;
+pub use patina_core::Attribute as PatinaAttribute;
 pub use patina_core::Component as PatinaComponent;
 pub use patina_core::ElementBuilder as PatinaElementBuilder;
+pub use patina_core::Event as PatinaEvent;
+pub use patina_core::EventType as PatinaEventType;
 pub type PatinaSignal<T> = AtlasSignal<T>;
 pub type PatinaEffect = AtlasEffect;
+pub use patina_reactive::Root as PatinaRoot;
 
 /// Browser HTTP/JSON client, compiled only for WebAssembly.
 #[cfg(target_arch = "wasm32")]
@@ -32,8 +45,10 @@ pub mod http;
 /// Everything commonly needed to build a page.
 pub mod prelude {
     pub use crate::{
-        AtlasComponent, AtlasEffect, AtlasElementBuilder, AtlasSignal, AtlasView, PatinaComponent,
-        PatinaEffect, PatinaElementBuilder, PatinaSignal, PatinaView,
+        AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElement, AtlasElementBuilder,
+        AtlasEvent, AtlasEventType, AtlasRoot, AtlasSignal, AtlasView, PatinaAttribute,
+        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
+        PatinaRoot, PatinaSignal, PatinaView,
     };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
