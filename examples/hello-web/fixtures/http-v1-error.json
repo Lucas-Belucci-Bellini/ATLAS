@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "not_found",
+    "message": "recurso não encontrado"
+  },
+  "meta": {
+    "api_version": "v1"
+  }
+}

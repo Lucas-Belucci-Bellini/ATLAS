@@ -12,6 +12,7 @@ patina-reactive = { path = "../patina-reactive" }
 wasm-bindgen = { workspace = true }
 web-sys = { workspace = true, features = [
     "CharacterData",
+    "Comment",
     "Document",
     "DocumentFragment",
     "Element",

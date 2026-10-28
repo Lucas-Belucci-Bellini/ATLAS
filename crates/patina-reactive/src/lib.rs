@@ -93,10 +93,19 @@ impl Runtime {
         let id = if let Some(index) = self.free.pop() {
             let slot = &mut self.slots[index];
             slot.kind = Some(kind);
-            NodeId { index, generation: slot.generation }
+            NodeId {
+                index,
+                generation: slot.generation,
+            }
         } else {
-            self.slots.push(Slot { generation: 0, kind: Some(kind) });
-            NodeId { index: self.slots.len() - 1, generation: 0 }
+            self.slots.push(Slot {
+                generation: 0,
+                kind: Some(kind),
+            });
+            NodeId {
+                index: self.slots.len() - 1,
+                generation: 0,
+            }
         };
         if let Some(scope) = self.owner.and_then(|owner| self.scope_mut(owner)) {
             scope.nodes.push(id);
@@ -173,14 +182,26 @@ impl Runtime {
 
     fn new_scope(&mut self) -> ScopeId {
         let parent = self.owner.filter(|owner| self.scope_mut(*owner).is_some());
-        let data = ScopeData { parent, ..ScopeData::default() };
+        let data = ScopeData {
+            parent,
+            ..ScopeData::default()
+        };
         let id = if let Some(index) = self.free_scopes.pop() {
             let slot = &mut self.scopes[index];
             slot.data = Some(data);
-            ScopeId { index, generation: slot.generation }
+            ScopeId {
+                index,
+                generation: slot.generation,
+            }
         } else {
-            self.scopes.push(ScopeSlot { generation: 0, data: Some(data) });
-            ScopeId { index: self.scopes.len() - 1, generation: 0 }
+            self.scopes.push(ScopeSlot {
+                generation: 0,
+                data: Some(data),
+            });
+            ScopeId {
+                index: self.scopes.len() - 1,
+                generation: 0,
+            }
         };
         if let Some(parent) = parent.and_then(|parent| self.scope_mut(parent)) {
             parent.children.push(id);
@@ -229,8 +250,16 @@ impl<T> fmt::Debug for Signal<T> {
 /// Cria um signal com o valor inicial.
 pub fn signal<T: 'static>(value: T) -> Signal<T> {
     let value: Rc<RefCell<dyn Any>> = Rc::new(RefCell::new(value));
-    let id = with_rt(|rt| rt.insert(NodeKind::Signal { value, subscribers: Vec::new() }));
-    Signal { id, _value: PhantomData }
+    let id = with_rt(|rt| {
+        rt.insert(NodeKind::Signal {
+            value,
+            subscribers: Vec::new(),
+        })
+    });
+    Signal {
+        id,
+        _value: PhantomData,
+    }
 }
 
 impl<T: 'static> Signal<T> {
@@ -335,7 +364,9 @@ fn run_effect(id: NodeId) {
         let previous = rt.observer.replace(id);
         Some((run, previous))
     });
-    let Some((run, previous)) = prepared else { return };
+    let Some((run, previous)) = prepared else {
+        return;
+    };
     (run.borrow_mut())();
     with_rt(|rt| rt.observer = previous);
 }
@@ -357,7 +388,12 @@ impl Effect {
 /// Roda `f` agora e de novo sempre que um signal lido por ele mudar.
 pub fn effect(f: impl FnMut() + 'static) -> Effect {
     let run: EffectFn = Rc::new(RefCell::new(f));
-    let id = with_rt(|rt| rt.insert(NodeKind::Effect { run, sources: Vec::new() }));
+    let id = with_rt(|rt| {
+        rt.insert(NodeKind::Effect {
+            run,
+            sources: Vec::new(),
+        })
+    });
     run_effect(id);
     Effect { id }
 }
@@ -450,7 +486,9 @@ impl Root {
             let mut removed = Vec::new();
             let mut stack = vec![self.id];
             while let Some(id) = stack.pop() {
-                let Some(data) = rt.take_scope(id) else { continue };
+                let Some(data) = rt.take_scope(id) else {
+                    continue;
+                };
                 stack.extend(data.children);
                 cleanups.extend(data.cleanups);
                 removed.extend(data.nodes.into_iter().filter_map(|node| rt.remove(node)));

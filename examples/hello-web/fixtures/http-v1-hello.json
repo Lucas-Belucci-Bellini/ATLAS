@@ -1,0 +1,9 @@
+{
+  "data": {
+    "message": "Olá do TITAN!",
+    "environment": "development"
+  },
+  "meta": {
+    "api_version": "v1"
+  }
+}

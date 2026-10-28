@@ -60,11 +60,17 @@ pub struct Attribute {
 
 impl Attribute {
     pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
-        Self { name: name.into(), value: AttrValue::Static(value.into()) }
+        Self {
+            name: name.into(),
+            value: AttrValue::Static(value.into()),
+        }
     }
 
     pub fn dynamic(name: impl Into<String>, f: impl Fn() -> String + 'static) -> Self {
-        Self { name: name.into(), value: AttrValue::Dynamic(DynText::new(f)) }
+        Self {
+            name: name.into(),
+            value: AttrValue::Dynamic(DynText::new(f)),
+        }
     }
 }
 
@@ -79,7 +85,11 @@ pub struct Event {
 
 impl Event {
     pub fn new<T: 'static>(raw: T) -> Self {
-        Self { raw: Box::new(raw), value: None, prevent_default: None }
+        Self {
+            raw: Box::new(raw),
+            value: None,
+            prevent_default: None,
+        }
     }
 
     pub fn with_value(mut self, value: Option<String>) -> Self {
@@ -113,7 +123,9 @@ impl Event {
 
 impl fmt::Debug for Event {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Event").field("value", &self.value).finish_non_exhaustive()
+        f.debug_struct("Event")
+            .field("value", &self.value)
+            .finish_non_exhaustive()
     }
 }
 
@@ -160,7 +172,10 @@ pub struct Listener {
 
 impl Listener {
     pub fn new(event: impl Into<String>, handler: impl FnMut(Event) + 'static) -> Self {
-        Self { event: event.into(), handler: Rc::new(RefCell::new(handler)) }
+        Self {
+            event: event.into(),
+            handler: Rc::new(RefCell::new(handler)),
+        }
     }
 
     /// Entrega `event` ao handler.
@@ -171,7 +186,9 @@ impl Listener {
 
 impl fmt::Debug for Listener {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Listener").field("event", &self.event).finish_non_exhaustive()
+        f.debug_struct("Listener")
+            .field("event", &self.event)
+            .finish_non_exhaustive()
     }
 }
 
@@ -215,7 +232,9 @@ impl Show {
 
 impl fmt::Debug for Show {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Show").field("otherwise", &self.otherwise.is_some()).finish_non_exhaustive()
+        f.debug_struct("Show")
+            .field("otherwise", &self.otherwise.is_some())
+            .finish_non_exhaustive()
     }
 }
 
@@ -236,7 +255,11 @@ impl From<Show> for View {
 ///
 /// `show(move || logado.get(), || el("p").text("Bem-vindo")).otherwise(|| el("p").text("Entre"))`
 pub fn show(when: impl Fn() -> bool + 'static, then: impl Fn() -> View + 'static) -> Show {
-    Show { when: Rc::new(when), then: Rc::new(then), otherwise: None }
+    Show {
+        when: Rc::new(when),
+        then: Rc::new(then),
+        otherwise: None,
+    }
 }
 
 trait KeyValue {
@@ -351,7 +374,10 @@ where
                 .map(|item| {
                     let key = Key::new(key(&item));
                     let render = render.clone();
-                    ListItem { key, build: Box::new(move || render(item)) }
+                    ListItem {
+                        key,
+                        build: Box::new(move || render(item)),
+                    }
                 })
                 .collect()
         }),
@@ -430,7 +456,12 @@ impl View {
                 }
             }
             View::Fragment(children) => children.iter().for_each(|child| child.write_html(out)),
-            View::Element { tag, attributes, children, .. } => {
+            View::Element {
+                tag,
+                attributes,
+                children,
+                ..
+            } => {
                 out.push('<');
                 out.push_str(tag);
                 for attribute in attributes {
@@ -453,7 +484,9 @@ impl View {
     }
 }
 
-const VOID_ELEMENTS: &[&str] = &["area", "br", "col", "hr", "img", "input", "link", "meta", "source", "wbr"];
+const VOID_ELEMENTS: &[&str] = &[
+    "area", "br", "col", "hr", "img", "input", "link", "meta", "source", "wbr",
+];
 
 fn escape_into(value: &str, out: &mut String) {
     for c in value.chars() {
@@ -544,7 +577,11 @@ impl ElementBuilder {
     }
 
     /// Liga um handler a um evento pelo nome do DOM.
-    pub fn on_event(mut self, event: impl Into<String>, handler: impl FnMut(Event) + 'static) -> Self {
+    pub fn on_event(
+        mut self,
+        event: impl Into<String>,
+        handler: impl FnMut(Event) + 'static,
+    ) -> Self {
         self.listeners.push(Listener::new(event, handler));
         self
     }
@@ -621,7 +658,11 @@ mod tests {
 
         let explicit = View::element("main")
             .attr("class", "pagina")
-            .child(View::element("h1").child(View::text("Olá, Patina!")).build())
+            .child(
+                View::element("h1")
+                    .child(View::text("Olá, Patina!"))
+                    .build(),
+            )
             .child(View::text("rodapé"))
             .build();
 
@@ -637,8 +678,14 @@ mod tests {
     #[test]
     fn render_html_escapes_text_and_attributes() {
         let view = el("p").attr("title", "a \"b\"").text("<x> & y").build();
-        assert_eq!(view.render_html(), "<p title=\"a &quot;b&quot;\">&lt;x&gt; &amp; y</p>");
-        assert_eq!(el("input").attr("value", "1").build().render_html(), "<input value=\"1\">");
+        assert_eq!(
+            view.render_html(),
+            "<p title=\"a &quot;b&quot;\">&lt;x&gt; &amp; y</p>"
+        );
+        assert_eq!(
+            el("input").attr("value", "1").build().render_html(),
+            "<input value=\"1\">"
+        );
     }
 
     fn first_listener(view: &View) -> super::Listener {
@@ -669,9 +716,13 @@ mod tests {
     fn input_event_carries_the_field_value() {
         let nome = signal(String::new());
         let campo = el("input")
-            .on(Input, move |ev| nome.set(ev.value().unwrap_or_default().to_string()))
+            .on(Input, move |ev| {
+                nome.set(ev.value().unwrap_or_default().to_string())
+            })
             .build();
-        let saudacao = el("p").text_with(move || format!("Olá, {}!", nome.get())).build();
+        let saudacao = el("p")
+            .text_with(move || format!("Olá, {}!", nome.get()))
+            .build();
 
         first_listener(&campo).call(Event::new(()).with_value(Some("Ana".into())));
         assert_eq!(saudacao.render_html(), "<p>Olá, Ana!</p>");
@@ -681,7 +732,13 @@ mod tests {
     fn dynamic_attribute_follows_its_signal() {
         let ativo = signal(false);
         let view = el("div")
-            .attr_with("class", move || if ativo.get() { "ativo".into() } else { String::new() })
+            .attr_with("class", move || {
+                if ativo.get() {
+                    "ativo".into()
+                } else {
+                    String::new()
+                }
+            })
             .build();
         ativo.set(true);
         assert_eq!(view.render_html(), "<div class=\"ativo\"></div>");
@@ -701,7 +758,10 @@ mod tests {
     fn show_follows_its_condition() {
         let logado = signal(false);
         let view = el("div")
-            .child(show(move || logado.get(), || el("p").text("Bem-vindo").build()).otherwise(|| "Entre".into()))
+            .child(
+                show(move || logado.get(), || el("p").text("Bem-vindo").build())
+                    .otherwise(|| "Entre".into()),
+            )
             .build();
         assert_eq!(view.render_html(), "<div>Entre</div>");
         logado.set(true);
@@ -712,7 +772,11 @@ mod tests {
     fn each_renders_items_in_order_and_skips_duplicate_keys() {
         let itens = signal(vec![(1, "um"), (2, "dois"), (1, "repetido")]);
         let view = el("ul")
-            .child(each(move || itens.get(), |item| item.0, |item| el("li").text(item.1).build()))
+            .child(each(
+                move || itens.get(),
+                |item| item.0,
+                |item| el("li").text(item.1).build(),
+            ))
             .build();
         assert_eq!(view.render_html(), "<ul><li>um</li><li>dois</li></ul>");
     }
@@ -721,7 +785,11 @@ mod tests {
     fn keys_compare_by_type_and_value() {
         assert_eq!(Key::new(1u32), Key::new(1u32));
         assert_ne!(Key::new(1u32), Key::new(2u32));
-        assert_ne!(Key::new(1u32), Key::new(1u64), "tipos diferentes nunca são iguais");
+        assert_ne!(
+            Key::new(1u32),
+            Key::new(1u64),
+            "tipos diferentes nunca são iguais"
+        );
         assert_eq!(Key::new(String::from("a")), Key::new(String::from("a")));
     }
 
@@ -737,7 +805,14 @@ mod tests {
 
     #[test]
     fn components_are_children_like_any_view() {
-        let view = el("section").child(Cartao { titulo: "Um".into() }).build();
-        assert_eq!(view.render_html(), "<section><article><h2>Um</h2></article></section>");
+        let view = el("section")
+            .child(Cartao {
+                titulo: "Um".into(),
+            })
+            .build();
+        assert_eq!(
+            view.render_html(),
+            "<section><article><h2>Um</h2></article></section>"
+        );
     }
 }
