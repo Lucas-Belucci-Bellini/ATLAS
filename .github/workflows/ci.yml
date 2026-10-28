@@ -46,3 +46,66 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Check workspace for WASM
         run: cargo check --workspace --target wasm32-unknown-unknown --locked
+
+  titan-http-contract:
+    name: Live HTTP contract against TITAN
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout ATLAS branch under review
+        uses: actions/checkout@v4
+        with:
+          path: atlas
+      - name: Checkout TITAN integration branch
+        uses: actions/checkout@v4
+        with:
+          repository: Lucas-Belucci-Bellini/TITAN
+          ref: identity/integration-contracts-2026-10
+          path: titan
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Start TITAN HTTP server
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $titanPath = Join-Path $env:GITHUB_WORKSPACE "titan"
+          $logOut = Join-Path $env:RUNNER_TEMP "titan.stdout.log"
+          $logErr = Join-Path $env:RUNNER_TEMP "titan.stderr.log"
+          $process = Start-Process -FilePath "cargo" -ArgumentList @("run", "--locked", "-p", "ferrovia-server") -WorkingDirectory $titanPath -PassThru -RedirectStandardOutput $logOut -RedirectStandardError $logErr
+          "TITAN_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            if ($process.HasExited) {
+              Get-Content $logOut -ErrorAction SilentlyContinue
+              Get-Content $logErr -ErrorAction SilentlyContinue
+              throw "TITAN encerrou antes de ficar pronto (exit code $($process.ExitCode))."
+            }
+            try {
+              $response = Invoke-WebRequest -Uri "http://127.0.0.1:3000/api/v1/hello" -TimeoutSec 2
+              if ($response.StatusCode -eq 200) {
+                $ready = $true
+                break
+              }
+            } catch {
+              Start-Sleep -Seconds 2
+            }
+          }
+          if (-not $ready) {
+            Get-Content $logOut -ErrorAction SilentlyContinue
+            Get-Content $logErr -ErrorAction SilentlyContinue
+            throw "TITAN não ficou pronto em 120 segundos."
+          }
+          Write-Host "TITAN respondeu em http://127.0.0.1:3000."
+      - name: Run ATLAS PowerShell contract smoke test against live TITAN
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & (Join-Path $env:GITHUB_WORKSPACE "atlas/examples/hello-web/scripts/contract-smoke-test.ps1") -BaseUrl "http://127.0.0.1:3000"
+      - name: Stop TITAN server
+        if: always()
+        shell: pwsh
+        run: |
+          $pidFile = Join-Path $env:RUNNER_TEMP "titan.pid"
+          if ($env:TITAN_PID) {
+            Stop-Process -Id ([int]$env:TITAN_PID) -Force -ErrorAction SilentlyContinue
+          }
