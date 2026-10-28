@@ -22,6 +22,9 @@ pub struct HttpClient {
     timeout_ms: u32,
 }
 
+/// Official Atlas name for the browser HTTP client.
+pub use self::HttpClient as AtlasHttpClient;
+
 impl HttpClient {
     /// Creates a client for an absolute HTTP(S) base URL.
     ///
@@ -87,6 +90,9 @@ pub struct HttpResponse {
     pub body: JsValue,
 }
 
+/// Official Atlas name for an HTTP response.
+pub use self::HttpResponse as AtlasHttpResponse;
+
 impl HttpResponse {
     /// Reads a required string field from a route-specific JSON object.
     pub fn string_field(value: &JsValue, field: &str) -> Result<String, JsValue> {
@@ -105,6 +111,9 @@ pub struct ApiEnvelope {
     /// Contract version from meta.api_version.
     pub api_version: String,
 }
+
+/// Official Atlas name for the versioned HTTP API envelope.
+pub use self::ApiEnvelope as AtlasApiEnvelope;
 
 impl ApiEnvelope {
     /// Parses the data/meta envelope used by the family HTTP/JSON contract.
