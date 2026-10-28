@@ -7,12 +7,6 @@ pub use patina_reactive::{
     batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal,
 };
 
-/// Official Atlas name for an HTML attribute descriptor.
-pub use patina_core::Attribute as AtlasAttribute;
-/// Official Atlas name for DOM event values.
-pub use patina_core::Event as AtlasEvent;
-/// Official Atlas name for DOM event kinds.
-pub use patina_core::EventType as AtlasEventType;
 /// Official Atlas name for a DOM blur event.
 pub use patina_core::ev::Blur as AtlasBlur;
 /// Official Atlas name for a DOM change event.
@@ -31,6 +25,12 @@ pub use patina_core::ev::KeyDown as AtlasKeyDown;
 pub use patina_core::ev::KeyUp as AtlasKeyUp;
 /// Official Atlas name for a DOM submit event.
 pub use patina_core::ev::Submit as AtlasSubmit;
+/// Official Atlas name for an HTML attribute descriptor.
+pub use patina_core::Attribute as AtlasAttribute;
+/// Official Atlas name for DOM event values.
+pub use patina_core::Event as AtlasEvent;
+/// Official Atlas name for DOM event kinds.
+pub use patina_core::EventType as AtlasEventType;
 /// Official Atlas names for core view and rendering types.
 pub use patina_core::{
     AttrValue as AtlasAttrValue, DynText as AtlasDynText, Key as AtlasKey, List as AtlasList,
@@ -76,12 +76,11 @@ pub mod prelude {
 
     pub use crate::{
         AtlasAttrValue, AtlasAttribute, AtlasBlur, AtlasChange, AtlasClick, AtlasComponent,
-        AtlasDoubleClick, AtlasDynText, AtlasEffect, AtlasElementBuilder, AtlasEvent, AtlasEventType,
-        AtlasFocus, AtlasInput, AtlasKey, AtlasKeyDown, AtlasKeyUp, AtlasList, AtlasListItem,
-        AtlasListener, AtlasOwner, AtlasRoot, AtlasShow, AtlasSignal, AtlasSubmit, AtlasView,
-        PatinaAttribute,
-        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
-        PatinaRoot, PatinaSignal, PatinaView,
+        AtlasDoubleClick, AtlasDynText, AtlasEffect, AtlasElementBuilder, AtlasEvent,
+        AtlasEventType, AtlasFocus, AtlasInput, AtlasKey, AtlasKeyDown, AtlasKeyUp, AtlasList,
+        AtlasListItem, AtlasListener, AtlasOwner, AtlasRoot, AtlasShow, AtlasSignal, AtlasSubmit,
+        AtlasView, PatinaAttribute, PatinaComponent, PatinaEffect, PatinaElementBuilder,
+        PatinaEvent, PatinaEventType, PatinaRoot, PatinaSignal, PatinaView,
     };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
