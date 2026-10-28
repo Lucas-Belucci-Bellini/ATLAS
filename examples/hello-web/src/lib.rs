@@ -2,18 +2,18 @@
 
 use patina::prelude::*;
 
-fn contador() -> View {
+fn contador() -> AtlasView {
     let cliques = signal(0);
 
     el("button")
         .class("botao")
-        .on(Click, move |_| cliques.update(|n| *n += 1))
+        .on(AtlasClick, move |_| cliques.update(|n| *n += 1))
         .text("Cliques: ")
         .child(cliques)
         .build()
 }
 
-fn saudacao() -> View {
+fn saudacao() -> AtlasView {
     let nome = signal(String::from("mundo"));
 
     el("div")
@@ -23,7 +23,7 @@ fn saudacao() -> View {
             el("input")
                 .attr("id", "nome")
                 .attr("value", "mundo")
-                .on(Input, move |ev| {
+                .on(AtlasInput, move |ev| {
                     nome.set(ev.value().unwrap_or_default().to_string())
                 }),
         )
@@ -32,8 +32,8 @@ fn saudacao() -> View {
 }
 
 #[cfg(target_arch = "wasm32")]
-fn integracao_titan() -> View {
-    use patina::http::{describe_js_error, ApiEnvelope, HttpClient};
+fn integracao_titan() -> AtlasView {
+    use patina::http::{describe_js_error, AtlasApiEnvelope, AtlasHttpClient};
     use wasm_bindgen::JsValue;
     use wasm_bindgen_futures::spawn_local;
 
@@ -41,13 +41,13 @@ fn integracao_titan() -> View {
         "API ainda não consultada. Inicie o TITAN e clique no botão.",
     ));
     let status_for_click = status.clone();
-    let client = HttpClient::new("http://127.0.0.1:3000").with_timeout_ms(5_000);
+    let client = AtlasHttpClient::new("http://127.0.0.1:3000").with_timeout_ms(5_000);
     let error_status_for_click = status.clone();
     let error_client = client.clone();
 
     let button = el("button")
         .class("botao")
-        .on(Click, move |_| {
+        .on(AtlasClick, move |_| {
             status_for_click.set("Consultando TITAN…".to_string());
 
             let client = client.clone();
@@ -56,7 +56,7 @@ fn integracao_titan() -> View {
                 match client.get_json("/api/v1/hello").await {
                     Ok(response) => {
                         let decoded = (|| -> Result<String, JsValue> {
-                            let envelope = ApiEnvelope::from_js(&response.body)?;
+                            let envelope = AtlasApiEnvelope::from_js(&response.body)?;
                             if envelope.api_version != "v1" {
                                 return Err(JsValue::from_str("versão de API não suportada"));
                             }
@@ -92,7 +92,7 @@ fn integracao_titan() -> View {
     // Intentionally call a missing versioned route to demonstrate the v1 error contract.
     let error_button = el("button")
         .class("botao")
-        .on(Click, move |_| {
+        .on(AtlasClick, move |_| {
             error_status_for_click.set("Testando resposta de erro v1…".to_string());
 
             let client = error_client.clone();
@@ -124,10 +124,10 @@ fn integracao_titan() -> View {
         .build()
 }
 
-pub fn pagina() -> View {
+pub fn pagina() -> AtlasView {
     let page =
         el("main")
-            .class("patina-demo")
+            .class("atlas-demo")
             .child(el("h1").text("ATLAS — demonstração"))
             .child(el("p").text(
                 "Interface reativa em Rust, preparada para consumir contratos HTTP versionados.",

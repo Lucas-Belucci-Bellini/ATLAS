@@ -8,7 +8,7 @@ Status: **proposed architecture decision for review** (2026-10). This document d
 - **ATLAS** — Rust frontend framework for browser interfaces compiled to WebAssembly (WASM).
 - **TITAN** — Rust backend HTTP framework for APIs and services.
 
-These are the public product/repository names for the family. This repository currently uses **Patina** and the `patina-*` Cargo crate namespace. Treat those as existing package/API identities during a compatibility transition. Do not rename packages, imports, environment variables or public symbols without a separate migration plan and explicit approval.
+These are the public product/repository names for the family. The `patina-*` Cargo namespace remains in place during a compatibility transition, while `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal` and `AtlasEffect` are the recommended public type names for new code. Generic names and the earlier `Patina*` aliases remain available for compatibility. Cargo packages/imports and environment-variable names are not changed in this API pass; any package rename needs a separate migration plan and impact inventory.
 
 ## ATLAS responsibility
 
@@ -36,8 +36,8 @@ AETHER is optional. An application may use ATLAS with another compatible HTTP ba
 
 - Product/repository brand: ATLAS.
 - Current package namespace: `patina-*` (observed in the workspace manifest).
-- Existing public Rust API remains unchanged until a separate approved migration.
-- A future rename must inventory imports, examples, docs, Cargo metadata, feature names and downstream use. No package rename is included in this proposal.
+- Public Rust API: additive `Atlas*` aliases are the recommended names for new code; generic names and `Patina*` aliases remain available.
+- A future Cargo package/crate rename must inventory imports, examples, docs, Cargo metadata, feature names and downstream use. No package rename is included in this change.
 
 ## Verification gates before claiming integration
 

@@ -3,9 +3,9 @@
 > Versão inicial: `0.1.0` — **esqueleto experimental**, não um framework pronto para produção.
 > Antes chamado de RustFront (nome de trabalho). Ver [ADR-0004](plans/decisions/ADR-0004-nome-patina.md).
 
-ATLAS é a camada que se forma na superfície do metal. Rust é o metal; Patina é a superfície — a interface.
+ATLAS é o framework de frontend em Rust da família: uma superfície declarativa para interfaces web executadas no navegador por WebAssembly, com uma pequena árvore de views e um renderer DOM próprio. A intenção é controlar a arquitetura do framework, sem usar Leptos, Dioxus ou Yew como runtime subjacente.
 
-Patina é um framework para interfaces web escrito em Rust. A primeira etapa mira aplicações SPA executadas no navegador por WebAssembly, com uma pequena árvore de views e um renderer DOM próprio. A intenção é controlar a arquitetura do framework, sem usar Leptos, Dioxus ou Yew como runtime subjacente.
+Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal`, `AtlasEffect`, `AtlasShow`, `AtlasList`, os eventos `AtlasClick`/`AtlasInput` e os tipos HTTP `AtlasHttpClient`, `AtlasHttpResponse` e `AtlasApiEnvelope`. Os nomes genéricos e os aliases Patina continuam disponíveis por compatibilidade; o namespace de crates `patina-*` não é renomeado nesta etapa.
 
 ## Objetivos
 
@@ -18,13 +18,13 @@ Patina é um framework para interfaces web escrito em Rust. A primeira etapa mir
 ## O que já existe 
 
 - Workspace Cargo com `patina-reactive`, `patina-core`, `patina-dom` e a crate de entrada `patina`.
-- Modelo `View` com texto (fixo ou dinâmico), fragmentos e elementos.
-- Builder pequeno (`el`, `.class`, `.attr`, `.attr_with`, `.text`, `.text_with`, `.child`, `.on`) e o trait `Component`.
+- Modelo `AtlasView` com texto (fixo ou dinâmico), fragmentos e elementos.
+- Builder pequeno (`el`, `.class`, `.attr`, `.attr_with`, `.text`, `.text_with`, `.child`, `.on`) e o trait `AtlasComponent`.
 - Signals, effects, `batch`, `untrack` e escopos com limpeza explícita.
 - Eventos (`Click`, `Input`, `Submit`…) removidos automaticamente no `unmount`.
 - Atualização localizada: quando um signal muda, só o nó de texto ou atributo afetado é tocado.
 - Exemplo `examples/hello-web` com contador e campo de texto.
-- Cliente HTTP/JSON exclusivo para WASM, com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
+- Cliente HTTP/JSON exclusivo para WASM (`AtlasHttpClient`, `AtlasHttpResponse`, `AtlasApiEnvelope`), com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
 - Testes nativos para o modelo de views e a reatividade, incluindo ausência de vazamentos.
 
 ## O que ainda não existe
@@ -63,10 +63,10 @@ Abra `http://localhost:8000`. O `wasm-pack` grava o pacote em `examples/hello-we
 ```rust
 use patina::prelude::*;
 
-fn pagina() -> View {
+fn pagina() -> AtlasView {
     el("main")
         .class("pagina")
-        .child(el("h1").text("Olá, Patina!"))
+        .child(el("h1").text("Olá, ATLAS!"))
         .child(el("p").text("UI web escrita em Rust."))
         .build()
 }
@@ -77,28 +77,28 @@ pub fn start() -> Result<(), JsValue> {
 }
 ```
 
-`.child` aceita uma `View`, um builder ainda não finalizado, texto, um `Signal` ou um `Component`.
+`.child` aceita uma `AtlasView`, um builder ainda não finalizado, texto, um `AtlasSignal` ou um `AtlasComponent`.
 
 ### Estado e eventos
 
 ```rust
 use patina::prelude::*;
 
-fn contador() -> View {
+fn contador() -> AtlasView {
     let cliques = signal(0);
 
     el("button")
-        .on(Click, move |_| cliques.update(|n| *n += 1))
+        .on(AtlasClick, move |_| cliques.update(|n| *n += 1))
         .text("Cliques: ")
         .child(cliques) // só este nó de texto é atualizado
         .build()
 }
 
-fn saudacao() -> View {
+fn saudacao() -> AtlasView {
     let nome = signal(String::from("mundo"));
 
     el("div")
-        .child(el("input").on(Input, move |ev| nome.set(ev.value().unwrap_or_default().into())))
+        .child(el("input").on(AtlasInput, move |ev| nome.set(ev.value().unwrap_or_default().into())))
         .child(el("p").text_with(move || format!("Olá, {}!", nome.get())))
         .build()
 }
