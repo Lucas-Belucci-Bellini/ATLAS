@@ -1,22 +1,29 @@
 //! ATLAS — Rust UI framework for browser/WASM applications.
-//! PatinaView, PatinaComponent, PatinaElementBuilder and PatinaSignal are
-//! framework-branded aliases. Existing short names remain available.
+//! Atlas-prefixed public names are the official API. Patina-prefixed aliases
+//! remain available for compatibility with earlier releases.
 
 pub use patina_core::{el, ev, Attribute, Component, ElementBuilder, Event, EventType, View};
 pub use patina_reactive::{
     batch, create_root, effect, on_cleanup, signal, untrack, Effect, Root, Signal,
 };
 
-/// Framework-branded alias for View.
-pub type PatinaView = View;
-/// Framework-branded alias for Component.
+/// Official Atlas name for View.
+pub type AtlasView = View;
+/// Official Atlas name for Component.
+pub use patina_core::Component as AtlasComponent;
+/// Official Atlas name for ElementBuilder.
+pub use patina_core::ElementBuilder as AtlasElementBuilder;
+/// Official Atlas name for Signal.
+pub type AtlasSignal<T> = Signal<T>;
+/// Official Atlas name for Effect.
+pub type AtlasEffect = Effect;
+
+/// Compatibility aliases for the previous public branding.
+pub type PatinaView = AtlasView;
 pub use patina_core::Component as PatinaComponent;
-/// Framework-branded alias for ElementBuilder.
 pub use patina_core::ElementBuilder as PatinaElementBuilder;
-/// Framework-branded alias for Signal.
-pub type PatinaSignal<T> = Signal<T>;
-/// Framework-branded alias for Effect.
-pub type PatinaEffect = Effect;
+pub type PatinaSignal<T> = AtlasSignal<T>;
+pub type PatinaEffect = AtlasEffect;
 
 /// Browser HTTP/JSON client, compiled only for WebAssembly.
 #[cfg(target_arch = "wasm32")]
@@ -25,7 +32,8 @@ pub mod http;
 /// Everything commonly needed to build a page.
 pub mod prelude {
     pub use crate::{
-        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaSignal, PatinaView,
+        AtlasComponent, AtlasEffect, AtlasElementBuilder, AtlasSignal, AtlasView, PatinaComponent,
+        PatinaEffect, PatinaElementBuilder, PatinaSignal, PatinaView,
     };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
