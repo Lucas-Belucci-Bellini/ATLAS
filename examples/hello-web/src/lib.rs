@@ -33,7 +33,7 @@ fn saudacao() -> AtlasView {
 
 #[cfg(target_arch = "wasm32")]
 fn integracao_titan() -> AtlasView {
-    use patina::http::{describe_js_error, ApiEnvelope, HttpClient};
+    use patina::http::{describe_js_error, AtlasApiEnvelope, AtlasHttpClient};
     use wasm_bindgen::JsValue;
     use wasm_bindgen_futures::spawn_local;
 
@@ -41,7 +41,7 @@ fn integracao_titan() -> AtlasView {
         "API ainda não consultada. Inicie o TITAN e clique no botão.",
     ));
     let status_for_click = status.clone();
-    let client = HttpClient::new("http://127.0.0.1:3000").with_timeout_ms(5_000);
+    let client = AtlasHttpClient::new("http://127.0.0.1:3000").with_timeout_ms(5_000);
     let error_status_for_click = status.clone();
     let error_client = client.clone();
 
@@ -56,7 +56,7 @@ fn integracao_titan() -> AtlasView {
                 match client.get_json("/api/v1/hello").await {
                     Ok(response) => {
                         let decoded = (|| -> Result<String, JsValue> {
-                            let envelope = ApiEnvelope::from_js(&response.body)?;
+                            let envelope = AtlasApiEnvelope::from_js(&response.body)?;
                             if envelope.api_version != "v1" {
                                 return Err(JsValue::from_str("versão de API não suportada"));
                             }
