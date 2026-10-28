@@ -7,7 +7,7 @@ fn contador() -> AtlasView {
 
     el("button")
         .class("botao")
-        .on(Click, move |_| cliques.update(|n| *n += 1))
+        .on(AtlasClick, move |_| cliques.update(|n| *n += 1))
         .text("Cliques: ")
         .child(cliques)
         .build()
@@ -23,7 +23,7 @@ fn saudacao() -> AtlasView {
             el("input")
                 .attr("id", "nome")
                 .attr("value", "mundo")
-                .on(Input, move |ev| {
+                .on(AtlasInput, move |ev| {
                     nome.set(ev.value().unwrap_or_default().to_string())
                 }),
         )
@@ -47,7 +47,7 @@ fn integracao_titan() -> AtlasView {
 
     let button = el("button")
         .class("botao")
-        .on(Click, move |_| {
+        .on(AtlasClick, move |_| {
             status_for_click.set("Consultando TITAN…".to_string());
 
             let client = client.clone();
@@ -92,7 +92,7 @@ fn integracao_titan() -> AtlasView {
     // Intentionally call a missing versioned route to demonstrate the v1 error contract.
     let error_button = el("button")
         .class("botao")
-        .on(Click, move |_| {
+        .on(AtlasClick, move |_| {
             error_status_for_click.set("Testando resposta de erro v1…".to_string());
 
             let client = error_client.clone();
