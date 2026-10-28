@@ -24,7 +24,9 @@ pub mod http;
 
 /// Everything commonly needed to build a page.
 pub mod prelude {
-    pub use crate::{PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaSignal, PatinaView};
+    pub use crate::{
+        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaSignal, PatinaView,
+    };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
     };
