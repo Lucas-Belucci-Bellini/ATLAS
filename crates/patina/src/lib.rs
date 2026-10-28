@@ -13,6 +13,24 @@ pub use patina_core::Attribute as AtlasAttribute;
 pub use patina_core::Event as AtlasEvent;
 /// Official Atlas name for DOM event kinds.
 pub use patina_core::EventType as AtlasEventType;
+/// Official Atlas name for a DOM blur event.
+pub use patina_core::ev::Blur as AtlasBlur;
+/// Official Atlas name for a DOM change event.
+pub use patina_core::ev::Change as AtlasChange;
+/// Official Atlas name for a DOM click event.
+pub use patina_core::ev::Click as AtlasClick;
+/// Official Atlas name for a DOM double-click event.
+pub use patina_core::ev::DoubleClick as AtlasDoubleClick;
+/// Official Atlas name for a DOM focus event.
+pub use patina_core::ev::Focus as AtlasFocus;
+/// Official Atlas name for a DOM input event.
+pub use patina_core::ev::Input as AtlasInput;
+/// Official Atlas name for a DOM key-down event.
+pub use patina_core::ev::KeyDown as AtlasKeyDown;
+/// Official Atlas name for a DOM key-up event.
+pub use patina_core::ev::KeyUp as AtlasKeyUp;
+/// Official Atlas name for a DOM submit event.
+pub use patina_core::ev::Submit as AtlasSubmit;
 /// Official Atlas names for core view and rendering types.
 pub use patina_core::{
     AttrValue as AtlasAttrValue, DynText as AtlasDynText, Key as AtlasKey, List as AtlasList,
@@ -57,9 +75,11 @@ pub mod prelude {
     pub use crate::AtlasMounted;
 
     pub use crate::{
-        AtlasAttrValue, AtlasAttribute, AtlasComponent, AtlasDynText, AtlasEffect,
-        AtlasElementBuilder, AtlasEvent, AtlasEventType, AtlasKey, AtlasList, AtlasListItem,
-        AtlasListener, AtlasOwner, AtlasRoot, AtlasShow, AtlasSignal, AtlasView, PatinaAttribute,
+        AtlasAttrValue, AtlasAttribute, AtlasBlur, AtlasChange, AtlasClick, AtlasComponent,
+        AtlasDoubleClick, AtlasDynText, AtlasEffect, AtlasElementBuilder, AtlasEvent, AtlasEventType,
+        AtlasFocus, AtlasInput, AtlasKey, AtlasKeyDown, AtlasKeyUp, AtlasList, AtlasListItem,
+        AtlasListener, AtlasOwner, AtlasRoot, AtlasShow, AtlasSignal, AtlasSubmit, AtlasView,
+        PatinaAttribute,
         PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
         PatinaRoot, PatinaSignal, PatinaView,
     };
