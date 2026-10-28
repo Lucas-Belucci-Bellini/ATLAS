@@ -44,6 +44,11 @@ pub mod http;
 
 /// Everything commonly needed to build a page.
 pub mod prelude {
+    #[cfg(target_arch = "wasm32")]
+    pub use crate::http::{AtlasApiEnvelope, AtlasHttpClient, AtlasHttpResponse};
+    #[cfg(target_arch = "wasm32")]
+    pub use crate::AtlasMounted;
+
     pub use crate::{
         AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElementBuilder,
         AtlasEvent, AtlasEventType, AtlasRoot, AtlasSignal, AtlasView, PatinaAttribute,
@@ -59,6 +64,9 @@ pub mod prelude {
 
 #[cfg(target_arch = "wasm32")]
 pub use patina_dom::Mounted;
+/// Official Atlas name for a mounted DOM view.
+#[cfg(target_arch = "wasm32")]
+pub use patina_dom::Mounted as AtlasMounted;
 
 /// Mounts a view into the first element matching the CSS selector target.
 #[cfg(target_arch = "wasm32")]
