@@ -2,7 +2,7 @@
 
 use patina::prelude::*;
 
-fn contador() -> View {
+fn contador() -> AtlasView {
     let cliques = signal(0);
 
     el("button")
@@ -13,7 +13,7 @@ fn contador() -> View {
         .build()
 }
 
-fn saudacao() -> View {
+fn saudacao() -> AtlasView {
     let nome = signal(String::from("mundo"));
 
     el("div")
@@ -32,7 +32,7 @@ fn saudacao() -> View {
 }
 
 #[cfg(target_arch = "wasm32")]
-fn integracao_titan() -> View {
+fn integracao_titan() -> AtlasView {
     use patina::http::{describe_js_error, ApiEnvelope, HttpClient};
     use wasm_bindgen::JsValue;
     use wasm_bindgen_futures::spawn_local;
@@ -124,10 +124,10 @@ fn integracao_titan() -> View {
         .build()
 }
 
-pub fn pagina() -> View {
+pub fn pagina() -> AtlasView {
     let page =
         el("main")
-            .class("patina-demo")
+            .class("atlas-demo")
             .child(el("h1").text("ATLAS — demonstração"))
             .child(el("p").text(
                 "Interface reativa em Rust, preparada para consumir contratos HTTP versionados.",
