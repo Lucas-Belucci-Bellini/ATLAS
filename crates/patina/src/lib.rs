@@ -45,7 +45,7 @@ pub mod http;
 /// Everything commonly needed to build a page.
 pub mod prelude {
     pub use crate::{
-        AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElement, AtlasElementBuilder,
+        AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElementBuilder,
         AtlasEvent, AtlasEventType, AtlasRoot, AtlasSignal, AtlasView, PatinaAttribute,
         PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
         PatinaRoot, PatinaSignal, PatinaView,
