@@ -18,10 +18,10 @@ pub use patina_core::{
     AttrValue as AtlasAttrValue, DynText as AtlasDynText, Key as AtlasKey, List as AtlasList,
     ListItem as AtlasListItem, Listener as AtlasListener, Show as AtlasShow,
 };
-/// Official Atlas name for a reactive ownership root.
-pub use patina_reactive::Root as AtlasRoot;
 /// Official Atlas name for a reactive ownership owner.
 pub use patina_reactive::Owner as AtlasOwner;
+/// Official Atlas name for a reactive ownership root.
+pub use patina_reactive::Root as AtlasRoot;
 
 /// Official Atlas name for View.
 pub type AtlasView = View;
