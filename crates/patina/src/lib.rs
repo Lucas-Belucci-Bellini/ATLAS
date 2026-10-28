@@ -50,10 +50,10 @@ pub mod prelude {
     pub use crate::AtlasMounted;
 
     pub use crate::{
-        AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElementBuilder,
-        AtlasEvent, AtlasEventType, AtlasRoot, AtlasSignal, AtlasView, PatinaAttribute,
-        PatinaComponent, PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType,
-        PatinaRoot, PatinaSignal, PatinaView,
+        AtlasAttribute, AtlasComponent, AtlasEffect, AtlasElementBuilder, AtlasEvent,
+        AtlasEventType, AtlasRoot, AtlasSignal, AtlasView, PatinaAttribute, PatinaComponent,
+        PatinaEffect, PatinaElementBuilder, PatinaEvent, PatinaEventType, PatinaRoot, PatinaSignal,
+        PatinaView,
     };
     pub use patina_core::ev::{
         Blur, Change, Click, DoubleClick, Focus, Input, KeyDown, KeyUp, Submit,
