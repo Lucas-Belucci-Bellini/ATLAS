@@ -5,7 +5,7 @@
 
 ATLAS é o framework de frontend em Rust da família: uma superfície declarativa para interfaces web executadas no navegador por WebAssembly, com uma pequena árvore de views e um renderer DOM próprio. A intenção é controlar a arquitetura do framework, sem usar Leptos, Dioxus ou Yew como runtime subjacente.
 
-Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal` e `AtlasEffect`. Os nomes genéricos e os aliases Patina continuam disponíveis por compatibilidade; o namespace de crates `patina-*` não é renomeado nesta etapa.
+Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal`, `AtlasEffect`, `AtlasHttpClient`, `AtlasHttpResponse` e `AtlasApiEnvelope`. Os nomes genéricos e os aliases Patina continuam disponíveis por compatibilidade; o namespace de crates `patina-*` não é renomeado nesta etapa.
 
 ## Objetivos
 
@@ -24,7 +24,7 @@ Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasE
 - Eventos (`Click`, `Input`, `Submit`…) removidos automaticamente no `unmount`.
 - Atualização localizada: quando um signal muda, só o nó de texto ou atributo afetado é tocado.
 - Exemplo `examples/hello-web` com contador e campo de texto.
-- Cliente HTTP/JSON exclusivo para WASM, com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
+- Cliente HTTP/JSON exclusivo para WASM (`AtlasHttpClient`, `AtlasHttpResponse`, `AtlasApiEnvelope`), com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
 - Testes nativos para o modelo de views e a reatividade, incluindo ausência de vazamentos.
 
 ## O que ainda não existe
