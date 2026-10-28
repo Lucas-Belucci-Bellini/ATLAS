@@ -5,7 +5,7 @@
 
 ATLAS é o framework de frontend em Rust da família: uma superfície declarativa para interfaces web executadas no navegador por WebAssembly, com uma pequena árvore de views e um renderer DOM próprio. A intenção é controlar a arquitetura do framework, sem usar Leptos, Dioxus ou Yew como runtime subjacente.
 
-Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal`, `AtlasEffect`, `AtlasHttpClient`, `AtlasHttpResponse` e `AtlasApiEnvelope`. Os nomes genéricos e os aliases Patina continuam disponíveis por compatibilidade; o namespace de crates `patina-*` não é renomeado nesta etapa.
+Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasElementBuilder`, `AtlasSignal`, `AtlasEffect`, `AtlasShow`, `AtlasList`, os eventos `AtlasClick`/`AtlasInput` e os tipos HTTP `AtlasHttpClient`, `AtlasHttpResponse` e `AtlasApiEnvelope`. Os nomes genéricos e os aliases Patina continuam disponíveis por compatibilidade; o namespace de crates `patina-*` não é renomeado nesta etapa.
 
 ## Objetivos
 
@@ -88,7 +88,7 @@ fn contador() -> AtlasView {
     let cliques = signal(0);
 
     el("button")
-        .on(Click, move |_| cliques.update(|n| *n += 1))
+        .on(AtlasClick, move |_| cliques.update(|n| *n += 1))
         .text("Cliques: ")
         .child(cliques) // só este nó de texto é atualizado
         .build()
@@ -98,7 +98,7 @@ fn saudacao() -> AtlasView {
     let nome = signal(String::from("mundo"));
 
     el("div")
-        .child(el("input").on(Input, move |ev| nome.set(ev.value().unwrap_or_default().into())))
+        .child(el("input").on(AtlasInput, move |ev| nome.set(ev.value().unwrap_or_default().into())))
         .child(el("p").text_with(move || format!("Olá, {}!", nome.get())))
         .build()
 }
