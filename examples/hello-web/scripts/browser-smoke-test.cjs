@@ -20,10 +20,10 @@ const { chromium } = require("playwright");
     await heading.waitFor({ state: "visible", timeout: 15_000 });
     console.log("PASS: WASM inicializou e a página ATLAS foi montada");
 
-    const counter = page.getByRole("button", { name: /Cliques:\\s*0/ });
+    const counter = page.getByRole("button", { name: /Cliques: *0/ });
     await counter.waitFor({ state: "visible" });
     await counter.click();
-    await page.getByRole("button", { name: /Cliques:\\s*1/ }).waitFor();
+    await page.getByRole("button", { name: /Cliques: *1/ }).waitFor();
     console.log("PASS: clique atualizou o signal e o texto do contador");
 
     const nameInput = page.getByLabel("Seu nome");
@@ -34,7 +34,7 @@ const { chromium } = require("playwright");
     console.log("PASS: campo de entrada atualizou a saudação reativa");
 
     if (failures.length > 0) {
-      throw new Error(failures.join("\\n"));
+      throw new Error(failures.join("; "));
     }
     console.log("ATLAS browser runtime smoke test: PASS");
   } finally {
