@@ -1,53 +1,53 @@
-# Backlog inicial — Patina
+# Backlog — ATLAS (pacotes atuais: patina-*)
 
-As tarefas abaixo já podem virar issues. Marque-as concluídas apenas depois de executar os critérios de aceite.
+As tarefas abaixo preservam os IDs históricos para não quebrar referências. Status deve refletir evidência no código e nos workflows, não apenas intenção.
 
 ## RF-001 — Validar ambiente e pipeline
-**Prioridade:** P0
+**Prioridade:** P0 · **Status:** concluído
 
-- Configurar CI com Rust stable.
-- Executar `cargo fmt --all -- --check`, `cargo test --workspace` e `cargo check --workspace`.
-- Adicionar build para `wasm32-unknown-unknown` e publicar o log do build.
+- CI com Rust stable para formatação, check, testes e Clippy.
+- Build para `wasm32-unknown-unknown`.
+- Auditoria automatizada de dependências.
 
-**Aceite:** o pipeline executa em pull requests e falha quando qualquer etapa falha.
+**Evidência:** workflows `Rust and WASM CI` e `Dependency Security Audit`. Consultar os resultados por SHA para cada PR.
 
 ## RF-002 — Testes de browser para renderer
-**Prioridade:** P0
+**Prioridade:** P0 · **Status:** parcial
 
-- Instalar/configurar `wasm-bindgen-test`.
-- Verificar texto, atributos, elementos aninhados, fragmentos e erro quando o alvo não existe.
+- Smoke test Playwright/Chromium do exemplo `hello-web`.
+- Cobrir renderização inicial, interações reativas, desmontagem e evento tardio em elemento destacado.
+- Expandir para atributos, elementos aninhados, fragmentos, alvo inexistente e erros de montagem.
 
-**Aceite:** testes documentados e executáveis num navegador/headless runner.
+**Aceite final:** matriz de browser/headless reproduzível que cubra as estruturas e falhas relevantes do renderer. O smoke test atual não satisfaz sozinho toda essa matriz.
 
 ## RF-003 — Definir contrato de componente
-**Prioridade:** P1
+**Prioridade:** P1 · **Status:** parcial
 
-- Propor uma API de componente que aceite propriedades tipadas.
-- Manter builders e views testáveis nativamente.
-- Documentar composição e erros de compilação comuns.
+- API inicial de componentes, builders e views existe.
+- Continuar refinando propriedades tipadas, composição e documentação de erros.
 
-**Aceite:** duas telas de exemplo compartilham o mesmo componente sem duplicar a estrutura.
+**Aceite final:** duas telas de exemplo compartilham componentes sem duplicar estrutura e com contrato público documentado.
 
 ## RF-004 — Sinais reativos e efeitos
-**Prioridade:** P1
+**Prioridade:** P1 · **Status:** implementação inicial concluída
 
-- Definir `Signal<T>`, assinaturas, efeitos e regras de ciclo de vida.
-- Desenhar atualização incremental antes de implementar.
-- Cobrir unsubscribe e descarte de effects.
+- Signals, subscriptions, effects e descarte explícito implementados em `patina-reactive`.
+- Atualização localizada de texto/atributos implementada.
+- Continuar ampliando testes de regressão e casos de dependência.
 
-**Aceite:** alterar um signal atualiza somente os nós dependentes e não deixa callbacks órfãos.
+**Aceite de evolução:** mudanças atualizam apenas os nós dependentes e não deixam callbacks órfãos.
 
 ## RF-005 — Eventos de DOM
-**Prioridade:** P1
+**Prioridade:** P1 · **Status:** implementação inicial concluída
 
-- Criar handlers para eventos comuns.
-- Definir ownership e limpeza de callbacks `Closure`.
-- Tratar listeners ao desmontar componente.
+- Handlers de eventos comuns implementados.
+- Ownership e cleanup dos listeners ligados à montagem escopada.
+- Smoke test Chromium cobre desmontagem e evento tardio.
 
-**Aceite:** handlers funcionam e são removidos na desmontagem.
+**Aceite de evolução:** ampliar matriz de eventos e navegadores.
 
 ## RF-006 — Roteador SPA
-**Prioridade:** P2
+**Prioridade:** P2 · **Status:** não iniciado
 
 - Suportar rotas estáticas, parâmetros e fallback 404.
 - Definir comportamento de back/forward e deep links.
