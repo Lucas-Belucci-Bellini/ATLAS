@@ -23,8 +23,9 @@
   <body>
     <div id="app">Carregando Patina…</div>
     <script type="module">
-      import init from "./pkg/hello_web.js";
-      init();
+      import init, { unmount_demo } from "./pkg/hello_web.js";
+      await init();
+      window.atlasUnmountDemo = unmount_demo;
     </script>
   </body>
 </html>
