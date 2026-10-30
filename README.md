@@ -24,12 +24,12 @@ Os nomes oficiais da API pública incluem `AtlasView`, `AtlasComponent`, `AtlasE
 - Eventos (`Click`, `Input`, `Submit`…) removidos automaticamente no `unmount`.
 - Atualização localizada: quando um signal muda, só o nó de texto ou atributo afetado é tocado.
 - Exemplo `examples/hello-web` com contador e campo de texto.
-- Cliente HTTP/JSON exclusivo para WASM (`AtlasHttpClient`, `AtlasHttpResponse`, `AtlasApiEnvelope`), com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN (verificação de navegador pendente).
+- Cliente HTTP/JSON exclusivo para WASM (`AtlasHttpClient`, `AtlasHttpResponse`, `AtlasApiEnvelope`), com timeout, rejeição de respostas não-2xx, parse de JSON e metadados de `x-request-id`; a demonstração inclui uma chamada opcional ao endpoint v1 do TITAN; o contrato HTTP compartilhado é exercitado no CI.
 - Testes nativos para o modelo de views e a reatividade, incluindo ausência de vazamentos.
 
 ## O que ainda não existe
 
-Não há renderização condicional nem listas com chave, roteador, CLI própria, hot reload, SSR ou hidratação. Os listeners ainda não têm testes automatizados no navegador. Esses itens estão organizados no roadmap.
+Não há renderização condicional nem listas com chave, roteador, CLI própria, hot reload, SSR ou hidratação. O workflow de CI executa o exemplo em Chromium e verifica renderização, interações reativas, desmontagem da árvore, remoção dos listeners e ausência de erros após um evento tardio em um elemento já destacado.
 
 ## Requisitos
 
@@ -104,7 +104,7 @@ fn saudacao() -> AtlasView {
 }
 ```
 
-`patina::mount` mantém a interface viva enquanto a página existir. Para desmontar, use `patina::mount_scoped("#app", || pagina())`, que devolve um `Mounted` com `unmount()`: ele remove os nós, os listeners e os effects.
+`patina::mount` mantém a interface viva enquanto a página existir. Para controlar o ciclo de vida, use `patina::mount_scoped("#app", || pagina())`, que devolve um `AtlasMounted` com `unmount()`: ele remove os nós renderizados, os listeners e os effects. O exemplo `hello-web` usa essa montagem escopada; o smoke test Chromium cobre também eventos tardios após a desmontagem.
 
 ## Estrutura
 
