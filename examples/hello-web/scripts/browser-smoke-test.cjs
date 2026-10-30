@@ -33,6 +33,17 @@ const { chromium } = require("playwright");
     await page.getByText("Olá, NEXORA!", { exact: true }).waitFor();
     console.log("PASS: campo de entrada atualizou a saudação reativa");
 
+    const detachedCounter = await page.getByRole("button", { name: /Cliques: *1/ }).elementHandle();
+    const unmounted = await page.evaluate(() => window.atlasUnmountDemo());
+    if (!unmounted) throw new Error("unmount_demo não descartou a montagem ativa");
+    await page.waitForFunction(() => document.querySelector("#app").childElementCount === 0);
+    await detachedCounter.evaluate((element) => element.click());
+    await page.waitForTimeout(50);
+    if (failures.length > 0) {
+      throw new Error(failures.join("; "));
+    }
+    console.log("PASS: unmount removeu DOM e listeners sem erros em eventos tardios");
+
     if (failures.length > 0) {
       throw new Error(failures.join("; "));
     }
