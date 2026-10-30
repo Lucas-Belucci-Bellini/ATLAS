@@ -142,9 +142,31 @@ pub fn pagina() -> AtlasView {
 }
 
 #[cfg(target_arch = "wasm32")]
+thread_local! {
+    static MOUNTED_DEMO: std::cell::RefCell<Option<patina::AtlasMounted>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen(start)]
 pub fn start() -> Result<(), wasm_bindgen::JsValue> {
-    patina::mount("#app", pagina())
+    let mounted = patina::mount_scoped("#app", pagina)?;
+    MOUNTED_DEMO.with(|slot| *slot.borrow_mut() = Some(mounted));
+    Ok(())
+}
+
+/// Removes the demo mount. Exported so the browser smoke test can exercise
+/// listener and reactive-effect cleanup through the public mounted handle.
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn unmount_demo() -> bool {
+    MOUNTED_DEMO.with(|slot| match slot.borrow_mut().take() {
+        Some(mounted) => {
+            mounted.unmount();
+            true
+        }
+        None => false,
+    })
 }
 
 #[cfg(test)]
