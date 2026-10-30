@@ -47,6 +47,58 @@ jobs:
       - name: Check workspace for WASM
         run: cargo check --workspace --target wasm32-unknown-unknown --locked
 
+  browser-smoke:
+    name: WASM runtime in Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout ATLAS
+        uses: actions/checkout@v4
+
+      - name: Install stable Rust and WASM target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Build browser example
+        run: wasm-pack build examples/hello-web --target web --out-dir pkg
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        working-directory: examples/hello-web
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Serve the compiled example
+        run: |
+          python3 -m http.server 8000 --directory examples/hello-web > /tmp/atlas-http.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/atlas-http.log
+          exit 1
+
+      - name: Test browser rendering and reactive interactions
+        working-directory: examples/hello-web
+        env:
+          ATLAS_BASE_URL: http://127.0.0.1:8000
+        run: node scripts/browser-smoke-test.cjs
+
   titan-http-contract:
     name: Live HTTP contract against TITAN
     runs-on: windows-latest
